@@ -1,0 +1,6 @@
+{
+  "id": 193,
+  "original": "/home/mloco/Escritorio/Servidor-ia/whatsapp-agent/media/input/videos_raw/VID-20260505-WA0011.mp4",
+  "text": null,
+  "error": "Network error calling http://127.0.0.1:11434/api/generate: HTTPConnectionPool(host='127.0.0.1', port=11434): Read timed out. (read timeout=60)"
+}

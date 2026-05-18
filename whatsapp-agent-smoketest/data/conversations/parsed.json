@@ -1,0 +1,62 @@
+[
+  {
+    "id": 0,
+    "date": "1/7/24",
+    "time": "14:20",
+    "sender": "Sergio Cesario",
+    "type": "text",
+    "text": "Good morning team. This is a smoke test for the OpenClaw WhatsApp skill.",
+    "filename": null,
+    "filepath": null,
+    "processed": false,
+    "result": null
+  },
+  {
+    "id": 1,
+    "date": "2/7/24",
+    "time": "0:53",
+    "sender": "Kashmir",
+    "type": "audio",
+    "text": null,
+    "filename": "PTT-20240702-WA0000.opus",
+    "filepath": "/home/mloco/Escritorio/Servidor-ia/whatsapp-agent-smoketest/media/input/audios_raw/PTT-20240702-WA0000.opus",
+    "processed": true,
+    "result": "All right, this is the results for the mold test for the\n final day at Harbor Breeze number 8. Yeah, he's forwarding\n the test right now for the laboratory in the United States."
+  },
+  {
+    "id": 2,
+    "date": "8/8/24",
+    "time": "17:03",
+    "sender": "Kashmir",
+    "type": "image",
+    "text": null,
+    "filename": "IMG-20251015-WA0052.jpg",
+    "filepath": "/home/mloco/Escritorio/Servidor-ia/whatsapp-agent-smoketest/media/input/images_raw/IMG-20251015-WA0052.jpg",
+    "processed": true,
+    "result": "The image shows a close-up of a black electronic device, likely a game console, resting on a wooden surface. The device appears dusty and has visible residue or grime on its top surface. Black cables are connected to the device, and a portion of another black object is visible on the left.\n\nText at the bottom of the image reads \"Unnecto Bolt 20\" and a timestamp \"2025.10.15 12:57\". No people or emotions are present. The setting appears to be an indoor environment, such as a desk or table."
+  },
+  {
+    "id": 3,
+    "date": "10/8/24",
+    "time": "19:23",
+    "sender": "Kashmir",
+    "type": "document",
+    "text": null,
+    "filename": "DOC-20240810-WA0019..pdf",
+    "filepath": "/home/mloco/Escritorio/Servidor-ia/whatsapp-agent-smoketest/media/input/documents_raw/DOC-20240810-WA0019..pdf",
+    "processed": true,
+    "result": "**Summary of the WhatsApp document (invoice/statement)**  \n\n- **Company:** Auto Cool & 60° Air Conditioning and Refrigeration  \n- **Date / Bill No:** June 28 2024 – Bill #5 6709  \n- **Contact:** Manager Kashmir B. Colebrooke; South Beach, Sea Link Dr., Nassau, Bahamas; 1‑242‑558‑9373; email Kashmir.Colebrooke@Outlook.com  \n- **Customer/Location:** Unit #8, Harbor Breeze (Cloister Dr., Paradise Island, Nassau)  \n- **Service performed:** Monthly cleaning of Unit #8 (wipe surfaces, air out rooms, mop floors, disinfect bathrooms) + Air‑conditioning service  \n- **Charges:**  \n  - Air Conditioning service: $0.00  \n  - Monthly cleaning fee: $200.00  \n  - Cleaning products: $50.00  \n  - Grill disposal/removal: $150.00  \n  - **Total due:** $400.00 (implied from line‑items)  \n- **Payment instruction:** Make checks payable to **Auto Cool & 60° Air Conditioning and Refrigeration**  \n- **Tagline / closing note:** “We get it right the first time!”  \n\n**Key take‑aways:** The document is an itemized invoice for routine cleaning and AC maintenance of a specific unit, listing contact details, service description, and a total amount of $400.00 payable to the named company."
+  },
+  {
+    "id": 4,
+    "date": "10/8/24",
+    "time": "19:24",
+    "sender": "Manoel Cozzolino",
+    "type": "text",
+    "text": "Please summarize what was sent.",
+    "filename": null,
+    "filepath": null,
+    "processed": false,
+    "result": null
+  }
+]

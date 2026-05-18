@@ -1,0 +1,7 @@
+{
+  "id": 119,
+  "original": "/home/mloco/Escritorio/Servidor-ia/moderation-bot/media/telegram/7434781236/0119_WhatsApp Ptt 2026-05-05 at 20.38.39.ogg",
+  "text": null,
+  "language": null,
+  "error": "HTTP error calling http://100.64.129.87:8765/inference: 400 Client Error: Bad Request for url: http://100.64.129.87:8765/inference"
+}
