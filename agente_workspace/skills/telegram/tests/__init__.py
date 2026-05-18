@@ -1,0 +1,1 @@
+"""Telegram skill tests."""
