@@ -132,7 +132,7 @@ def is_rate_limited(chat_id: str, min_seconds: int = 1) -> bool:
 
 
 def build_reply(message: Dict[str, Any], router: TaskRouter, remote: RemoteClient, state: Any | None = None) -> str:
-    """Build a text reply using the same UM890/DGX core used by WhatsApp."""
+    """Build a text reply using the UM890/DGX core used by Telegram."""
     from skills.telegram.utils.logger import get_logger
     LOGGER = get_logger(__name__)
     

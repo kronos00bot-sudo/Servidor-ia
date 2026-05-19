@@ -173,6 +173,4 @@ class TelegramConfig:
 
     @classmethod
     def webhook_path(cls) -> str:
-        if cls.TELEGRAM_WEBHOOK_SECRET:
-            return f"{cls.TELEGRAM_WEBHOOK_BASE_PATH}/{cls.TELEGRAM_WEBHOOK_SECRET}"
         return cls.TELEGRAM_WEBHOOK_BASE_PATH

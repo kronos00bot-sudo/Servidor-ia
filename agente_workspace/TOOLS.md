@@ -45,7 +45,7 @@ Add whatever helps you do your job. This is your cheat sheet.
 - DGX remote Ollama (Tailscale): http://100.64.129.87:11434
 - DGX whisper-server (Tailscale): http://100.64.129.87:8765/inference
 
-### WhatsApp Skill Routing
+### Telegram Skill Routing
 
 - STT audio/video -> DGX whisper-server
 - Vision image/video frames -> UM890 local vision model

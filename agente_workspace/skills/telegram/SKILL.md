@@ -1,12 +1,12 @@
 ---
 name: telegram
-summary: Telegram proactive adapter for OpenClaw using the shared WhatsApp core.
+summary: Telegram proactive skill for OpenClaw with dedicated routing and moderation flow.
 applyTo: "skills/telegram/**"
 ---
 
 # Telegram Skill
 
-Telegram es el adaptador proactivo de OpenClaw sobre el core compartido de WhatsApp.
+Telegram es la skill proactiva y de moderación de OpenClaw para Telegram.
 
 ## Modos de ejecucion
 
@@ -36,5 +36,5 @@ Telegram es el adaptador proactivo de OpenClaw sobre el core compartido de Whats
 
 ## Notas
 
-- El canal debe permanecer como adaptador fino; la logica de IA vive en el core compartido.
+- El canal debe permanecer enfocado en Telegram; la logica de IA vive en su propio core interno.
 - Para media, el primer corte prioriza descarga y procesamiento local/remoto antes de acciones proactivas avanzadas.

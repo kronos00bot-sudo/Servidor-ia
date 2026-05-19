@@ -4,7 +4,7 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WORKSPACE_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
-VENV="$WORKSPACE_DIR/../agente_workspace/skills/whatsapp/.venv/bin/python"
+VENV="$WORKSPACE_DIR/../agente_workspace/skills/telegram/.venv/bin/python"
 
 # Cargar variables de entorno del bot de moderación
 set -a

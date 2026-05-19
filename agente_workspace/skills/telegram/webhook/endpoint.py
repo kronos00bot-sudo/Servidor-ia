@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+import hmac
 import json
-import os
 from typing import Any, Dict
 
 from flask import Flask, jsonify, request
@@ -16,13 +16,18 @@ from skills.telegram.media import TelegramMediaClient
 from skills.telegram.service import process_update
 from skills.telegram.state import TelegramState
 from skills.telegram.utils.config import TelegramConfig
+from skills.telegram.utils.exceptions import ConfigError
+from skills.telegram.utils.logger import get_logger
+
+
+LOGGER = get_logger(__name__)
 
 
 def _verify_secret(secret: str) -> bool:
     expected = TelegramConfig.TELEGRAM_WEBHOOK_SECRET
     if not expected:
-        return True
-    return secret == expected
+        return False
+    return hmac.compare_digest(secret or "", expected)
 
 
 def _extract_payload(raw_body: bytes) -> Dict[str, Any]:
@@ -46,24 +51,29 @@ def create_app(
 
     if validate_config:
         TelegramConfig.validate()
+        if not TelegramConfig.TELEGRAM_WEBHOOK_SECRET:
+            raise ConfigError("TELEGRAM_WEBHOOK_SECRET es obligatorio para exponer el webhook")
     router = router or TaskRouter(TelegramConfig)
     remote = remote or RemoteClient()
     tg_client = tg_client or TelegramClient()
     state = TelegramState()
     media_client = TelegramMediaClient()
+
     @app.get("/health")
     def health():
         return jsonify({"ok": True, "channel": "telegram"}), 200
 
     @app.get(TelegramConfig.webhook_path())
-    def verify_webhook(secret: str | None = None):
-        if not _verify_secret(secret or ""):
+    def verify_webhook():
+        header_secret = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
+        if not _verify_secret(header_secret):
             return "Forbidden", 403
         return jsonify({"ok": True, "channel": "telegram"}), 200
 
     @app.post(TelegramConfig.webhook_path())
-    def receive_webhook(secret: str | None = None):
-        if not _verify_secret(secret or ""):
+    def receive_webhook():
+        header_secret = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
+        if not _verify_secret(header_secret):
             return jsonify({"ok": False, "error": "Forbidden"}), 403
 
         raw_body = request.get_data() or b""
@@ -81,9 +91,11 @@ def create_app(
             )
             return jsonify(result), 200
         except WebhookError as exc:
-            return jsonify({"ok": False, "error": str(exc)}), 400
+            LOGGER.warning("Webhook request rejected: %s", exc)
+            return jsonify({"ok": False, "error": "Invalid request"}), 400
         except Exception as exc:
-            return jsonify({"ok": False, "error": str(exc)}), 500
+            LOGGER.exception("Webhook processing failed: %r", exc)
+            return jsonify({"ok": False, "error": "Internal server error"}), 500
 
     return app
 

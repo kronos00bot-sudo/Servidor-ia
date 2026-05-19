@@ -1,6 +1,6 @@
 # Telegram Adapter
 
-Telegram es el adaptador proactivo de OpenClaw sobre el core compartido de WhatsApp.
+Telegram es la skill dedicada de OpenClaw para mensajería, moderación y automatización sobre Telegram.
 
 ## Ejecucion
 
@@ -64,5 +64,5 @@ Comandos de aprobacion (en el chat privado):
 ## Estado
 
 - Guarda estado liviano por chat en `data/telegram_state.json`.
-- Reutiliza ruteo, transcripcion, vision, documentos e interpretacion del core existente.
+- Reutiliza ruteo, transcripcion, vision, documentos e interpretacion del core interno de Telegram.
 - Puede procesar media y emitir resúmenes proactivos cuando el chat queda inactivo.

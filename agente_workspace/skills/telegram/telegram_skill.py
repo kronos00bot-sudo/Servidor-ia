@@ -20,7 +20,7 @@ logger = get_logger(__name__)
 
 
 class TelegramSkill:
-    """Thin Telegram adapter over the existing OpenClaw WhatsApp core."""
+    """Telegram skill entrypoint over the OpenClaw Telegram stack."""
 
     def __init__(self, config: TelegramConfig = CONFIG):
         self.config = config

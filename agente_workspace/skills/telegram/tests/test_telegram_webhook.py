@@ -4,7 +4,11 @@ from skills.telegram.core import LAST_MESSAGE_AT, build_reply, extract_update_me
 from skills.telegram.service import process_update
 from skills.telegram.state import TelegramState
 from skills.telegram.utils.config import TelegramConfig
+from skills.telegram.utils.exceptions import ConfigError, WebhookError
 from skills.telegram.webhook.endpoint import create_app
+
+
+SECRET_HEADER = {"X-Telegram-Bot-Api-Secret-Token": "test-secret"}
 
 
 @pytest.fixture(autouse=True)
@@ -12,7 +16,7 @@ def _isolate_config(monkeypatch, tmp_path):
     monkeypatch.setattr(TelegramConfig, "TELEGRAM_ALLOWED_CHAT_ID", "")
     monkeypatch.setattr(TelegramConfig, "TELEGRAM_APPROVAL_CHAT_ID", "")
     monkeypatch.setattr(TelegramConfig, "TELEGRAM_MONITORED_CHAT_ID", "")
-    monkeypatch.setattr(TelegramConfig, "TELEGRAM_WEBHOOK_SECRET", "")
+    monkeypatch.setattr(TelegramConfig, "TELEGRAM_WEBHOOK_SECRET", "test-secret")
     monkeypatch.setattr(TelegramConfig, "TELEGRAM_RATE_LIMIT_SECONDS", 0)
     monkeypatch.setattr(TelegramConfig, "PROJECT_DIR", tmp_path)
 
@@ -88,7 +92,7 @@ def test_webhook_flow_text_message(monkeypatch):
         }
     }
 
-    resp = client.post("/telegram/webhook", json=payload)
+    resp = client.post("/telegram/webhook", json=payload, headers=SECRET_HEADER)
     assert resp.status_code == 200
     body = resp.get_json()
     assert body["ok"] is True
@@ -133,7 +137,7 @@ def test_process_update_media_enriches_text():
             "photo": [{"file_id": "x"}],
         }
     }
-    resp = client.post("/telegram/webhook", json=payload)
+    resp = client.post("/telegram/webhook", json=payload, headers=SECRET_HEADER)
     monkeypatch.undo()
     assert resp.status_code == 200
     body = resp.get_json()
@@ -159,7 +163,7 @@ def test_process_update_media_failure_returns_user_feedback():
             "voice": {"file_id": "voice_1", "mime_type": "audio/ogg"},
         }
     }
-    resp = client.post("/telegram/webhook", json=payload)
+    resp = client.post("/telegram/webhook", json=payload, headers=SECRET_HEADER)
     monkeypatch.undo()
     assert resp.status_code == 200
     body = resp.get_json()
@@ -182,7 +186,7 @@ def test_group_message_is_queued_for_approval(monkeypatch):
             "text": "Necesitamos actualizar el reporte",
         }
     }
-    resp = client.post("/telegram/webhook", json=payload)
+    resp = client.post("/telegram/webhook", json=payload, headers=SECRET_HEADER)
     assert resp.status_code == 200
     body = resp.get_json()
     assert body["ok"] is True
@@ -208,7 +212,7 @@ def test_approve_command_sends_english_reply_to_group(monkeypatch):
             "text": "Can you share the delivery estimate?",
         }
     }
-    queue_resp = client.post("/telegram/webhook", json=group_payload)
+    queue_resp = client.post("/telegram/webhook", json=group_payload, headers=SECRET_HEADER)
     assert queue_resp.status_code == 200
     queue_body = queue_resp.get_json()
     approval_id = queue_body["approval_id"]
@@ -221,7 +225,7 @@ def test_approve_command_sends_english_reply_to_group(monkeypatch):
             "text": f"/approve {approval_id}",
         }
     }
-    approve_resp = client.post("/telegram/webhook", json=approve_payload)
+    approve_resp = client.post("/telegram/webhook", json=approve_payload, headers=SECRET_HEADER)
     assert approve_resp.status_code == 200
     approve_body = approve_resp.get_json()
     assert approve_body["ok"] is True
@@ -246,7 +250,7 @@ def test_spanish_approval_commands_are_accepted(monkeypatch):
             "text": "Can you share the delivery estimate?",
         }
     }
-    queue_resp = client.post("/telegram/webhook", json=group_payload)
+    queue_resp = client.post("/telegram/webhook", json=group_payload, headers=SECRET_HEADER)
     assert queue_resp.status_code == 200
     approval_id = queue_resp.get_json()["approval_id"]
 
@@ -258,7 +262,7 @@ def test_spanish_approval_commands_are_accepted(monkeypatch):
             "text": f"/aprobar {approval_id}",
         }
     }
-    approve_resp = client.post("/telegram/webhook", json=approve_payload)
+    approve_resp = client.post("/telegram/webhook", json=approve_payload, headers=SECRET_HEADER)
     assert approve_resp.status_code == 200
     approve_body = approve_resp.get_json()
     assert approve_body["ok"] is True
@@ -289,7 +293,7 @@ def test_spanish_approval_note_is_translated_to_english(monkeypatch):
             "text": "Can you share the delivery estimate?",
         }
     }
-    queue_resp = client.post("/telegram/webhook", json=group_payload)
+    queue_resp = client.post("/telegram/webhook", json=group_payload, headers=SECRET_HEADER)
     approval_id = queue_resp.get_json()["approval_id"]
 
     approve_payload = {
@@ -300,7 +304,7 @@ def test_spanish_approval_note_is_translated_to_english(monkeypatch):
             "text": f"/aprobar {approval_id} Por favor mantén actualizado el estimado.",
         }
     }
-    approve_resp = client.post("/telegram/webhook", json=approve_payload)
+    approve_resp = client.post("/telegram/webhook", json=approve_payload, headers=SECRET_HEADER)
     assert approve_resp.status_code == 200
     sent_to_group = [call for call in tg_client.calls if call[0] == "-777"]
     assert sent_to_group[-1][1] == "Please keep the delivery estimate updated."
@@ -322,7 +326,7 @@ def test_reject_command_closes_pending_without_sending_to_source(monkeypatch):
             "text": "Please send the latest status",
         }
     }
-    queue_resp = client.post("/telegram/webhook", json=group_payload)
+    queue_resp = client.post("/telegram/webhook", json=group_payload, headers=SECRET_HEADER)
     assert queue_resp.status_code == 200
     approval_id = queue_resp.get_json()["approval_id"]
 
@@ -334,7 +338,7 @@ def test_reject_command_closes_pending_without_sending_to_source(monkeypatch):
             "text": f"/rechazar {approval_id} No aplica ahora",
         }
     }
-    reject_resp = client.post("/telegram/webhook", json=reject_payload)
+    reject_resp = client.post("/telegram/webhook", json=reject_payload, headers=SECRET_HEADER)
     assert reject_resp.status_code == 200
     reject_body = reject_resp.get_json()
     assert reject_body["ok"] is True
@@ -343,7 +347,7 @@ def test_reject_command_closes_pending_without_sending_to_source(monkeypatch):
     sent_to_group = [call for call in tg_client.calls if call[0] == "-777"]
     assert len(sent_to_group) == 0
 
-    reject_again_resp = client.post("/telegram/webhook", json=reject_payload)
+    reject_again_resp = client.post("/telegram/webhook", json=reject_payload, headers=SECRET_HEADER)
     assert reject_again_resp.status_code == 200
     assert "ya fue rechazada" in reject_again_resp.get_json()["reply"]
 
@@ -364,7 +368,7 @@ def test_cannot_approve_after_reject(monkeypatch):
             "text": "Need your approval",
         }
     }
-    queue_resp = client.post("/telegram/webhook", json=group_payload)
+    queue_resp = client.post("/telegram/webhook", json=group_payload, headers=SECRET_HEADER)
     assert queue_resp.status_code == 200
     approval_id = queue_resp.get_json()["approval_id"]
 
@@ -376,7 +380,7 @@ def test_cannot_approve_after_reject(monkeypatch):
             "text": f"/rechazar {approval_id} no procede",
         }
     }
-    reject_resp = client.post("/telegram/webhook", json=reject_payload)
+    reject_resp = client.post("/telegram/webhook", json=reject_payload, headers=SECRET_HEADER)
     assert reject_resp.status_code == 200
     assert "rechazada" in reject_resp.get_json()["reply"]
 
@@ -388,7 +392,7 @@ def test_cannot_approve_after_reject(monkeypatch):
             "text": f"/aprobar {approval_id}",
         }
     }
-    approve_after_reject_resp = client.post("/telegram/webhook", json=approve_after_reject_payload)
+    approve_after_reject_resp = client.post("/telegram/webhook", json=approve_after_reject_payload, headers=SECRET_HEADER)
     assert approve_after_reject_resp.status_code == 200
     assert "ya fue rechazada" in approve_after_reject_resp.get_json()["reply"]
 
@@ -412,7 +416,7 @@ def test_group_message_not_monitored_when_config_missing(monkeypatch):
             "text": "Please provide the latest deployment status",
         }
     }
-    resp = client.post("/telegram/webhook", json=payload)
+    resp = client.post("/telegram/webhook", json=payload, headers=SECRET_HEADER)
     assert resp.status_code == 200
     body = resp.get_json()
     assert body["ok"] is True
@@ -440,9 +444,48 @@ def test_private_chat_can_queue_for_approval_when_same_control_chat(monkeypatch)
 
     mp = __import__("pytest").MonkeyPatch()
     mp.setattr("skills.telegram.service.process_telegram_media", fake_process_telegram_media)
-    resp = client.post("/telegram/webhook", json=payload)
+    resp = client.post("/telegram/webhook", json=payload, headers=SECRET_HEADER)
     mp.undo()
     assert resp.status_code == 200
     body = resp.get_json()
     assert body["ok"] is True
     assert body["queued_for_approval"] is True
+
+
+def test_webhook_rejects_missing_secret_header():
+    app = create_app(router=FakeRouter(), remote=FakeRemote(), tg_client=FakeClient(), validate_config=False)
+    client = app.test_client()
+    resp = client.post("/telegram/webhook", json={"message": {"message_id": 1}})
+    assert resp.status_code == 403
+
+
+def test_create_app_requires_secret_when_validating(monkeypatch):
+    monkeypatch.setattr(TelegramConfig, "TELEGRAM_WEBHOOK_SECRET", "")
+    with pytest.raises(ConfigError):
+        create_app(router=FakeRouter(), remote=FakeRemote(), tg_client=FakeClient(), validate_config=True)
+
+
+def test_webhook_returns_generic_bad_request(monkeypatch):
+    app = create_app(router=FakeRouter(), remote=FakeRemote(), tg_client=FakeClient(), validate_config=False)
+    client = app.test_client()
+
+    def bad_payload(_raw):
+        raise WebhookError("token=123 hidden")
+
+    monkeypatch.setattr("skills.telegram.webhook.endpoint._extract_payload", bad_payload)
+    resp = client.post("/telegram/webhook", data=b"{}", headers=SECRET_HEADER)
+    assert resp.status_code == 400
+    assert resp.get_json() == {"ok": False, "error": "Invalid request"}
+
+
+def test_webhook_returns_generic_internal_error(monkeypatch):
+    app = create_app(router=FakeRouter(), remote=FakeRemote(), tg_client=FakeClient(), validate_config=False)
+    client = app.test_client()
+
+    def boom(*args, **kwargs):
+        raise RuntimeError("https://api.telegram.org/bot123456:ABCDEF/sendMessage failed")
+
+    monkeypatch.setattr("skills.telegram.webhook.endpoint.process_update", boom)
+    resp = client.post("/telegram/webhook", json={"message": {"message_id": 1}}, headers=SECRET_HEADER)
+    assert resp.status_code == 500
+    assert resp.get_json() == {"ok": False, "error": "Internal server error"}
