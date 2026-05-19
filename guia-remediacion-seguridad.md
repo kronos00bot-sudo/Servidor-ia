@@ -260,7 +260,7 @@ chmod 600 ~/.openclaw/config.json  # si existe
 # Crear el fichero de credenciales seguro
 touch ~/.credentials
 chmod 600 ~/.credentials
-echo 'OPENCLAW_TELEGRAM_BOT_TOKEN=tu_token_aqui' >> ~/.credentials
+echo 'OPENCLAW_TELEGRAM_BOT_TOKEN=<TELEGRAM_BOT_TOKEN>' >> ~/.credentials
 
 # Añadir al servicio en ~/.config/systemd/user/openclaw-gateway.service:
 # EnvironmentFile=%h/.credentials
@@ -431,7 +431,7 @@ Hasta completar el emparejamiento, el bot responde a cualquier mensaje revelando
 
 ```json
 "commands": {
-  "ownerAllowFrom": ["telegram:TU_TELEGRAM_ID_NUMERICO"]
+  "ownerAllowFrom": ["telegram:<TELEGRAM_USER_ID>"]
 }
 ```
 
@@ -518,8 +518,8 @@ Configurar Tailscale ACLs desde el panel de administración en `https://login.ta
   "acls": [
     {
       "action": "accept",
-      "src": ["100.64.X.X"],
-      "dst": ["100.64.129.87:11434"]
+      "src": ["<UM890_TAILSCALE_IP>"],
+      "dst": ["<DGX_TAILSCALE_IP>:11434"]
     },
     {
       "action": "accept",
@@ -530,7 +530,7 @@ Configurar Tailscale ACLs desde el panel de administración en `https://login.ta
 }
 ```
 
-> Sustituir `100.64.X.X` por la IP Tailscale real del UM890 (obtenida con `tailscale ip`).
+> Sustituir `<UM890_TAILSCALE_IP>` por la IP Tailscale real del UM890 (obtenida con `tailscale ip`).
 
 ---
 
@@ -615,7 +615,7 @@ getent group systemd-journal
 **Severidad:** `INFO`  
 **Afecta:** UM890 PRO (§23.3, §27)
 
-La IP `100.64.129.87` aparece en `config.yaml` de Continue.dev, scripts de verificación y otros archivos. Si el DGX cambia de IP en la tailnet, todas las referencias quedan rotas.
+La IP `<DGX_TAILSCALE_IP>` aparece en `config.yaml` de Continue.dev, scripts de verificación y otros archivos. Si el DGX cambia de IP en la tailnet, todas las referencias quedan rotas.
 
 #### Cómo mejorar
 
@@ -623,7 +623,7 @@ Usar el hostname de MagicDNS en todos los archivos de configuración:
 
 ```bash
 # En ~/.continue/config.yaml:
-apiBase: http://spark-be9d:11434    # en lugar de http://100.64.129.87:11434
+apiBase: http://spark-be9d:11434    # en lugar de http://<DGX_TAILSCALE_IP>:11434
 
 # En el .credentials del UM890:
 DGX_OLLAMA_URL=http://spark-be9d:11434

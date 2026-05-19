@@ -42,8 +42,8 @@ Add whatever helps you do your job. This is your cheat sheet.
 ## DGX and UM890
 
 - UM890 local Ollama: http://127.0.0.1:11434
-- DGX remote Ollama (Tailscale): http://100.64.129.87:11434
-- DGX whisper-server (Tailscale): http://100.64.129.87:8765/inference
+- DGX remote Ollama (Tailscale): http://<DGX_TAILSCALE_IP>:11434
+- DGX whisper-server (Tailscale): http://<DGX_TAILSCALE_IP>:8765/inference
 
 ### Telegram Skill Routing
 

@@ -81,10 +81,10 @@ tailscale status
 
 ```bash
 # DGX
-tailscale ip -4    # → ej: 100.64.129.87
+tailscale ip -4    # → ej: <DGX_TAILSCALE_IP>
 
 # UM890
-tailscale ip -4    # → ej: 100.64.X.Y
+tailscale ip -4    # → ej: <UM890_TAILSCALE_IP>
 ```
 
 ---
@@ -122,7 +122,7 @@ sudo systemctl restart ollama
 sudo apt install -y caddy
 
 # Generar hash de contraseña
-HASH=$(caddy hash-password -plaintext "tu_contraseña_segura")
+HASH=$(caddy hash-password -plaintext "<password>")
 
 # Crear Caddyfile
 sudo tee /etc/caddy/Caddyfile > /dev/null <<EOF
@@ -141,8 +141,8 @@ sudo systemctl enable --now caddy
 
 ```bash
 # En ~/.continue/config.yaml
-# Cambiar:  apiBase: http://100.64.129.87:11434
-# A:        apiBase: http://100.64.129.87:11435
+# Cambiar:  apiBase: http://<DGX_TAILSCALE_IP>:11434
+# A:        apiBase: http://<DGX_TAILSCALE_IP>:11435
 # (con autenticación configurada en el cliente)
 ```
 
@@ -154,7 +154,7 @@ curl http://localhost:11435/api/tags
 # → 401 Unauthorized ✅
 
 # Debe funcionar con credenciales
-curl -u mloco:tu_contraseña_segura http://localhost:11435/api/tags
+curl -u <usuario>:<password> http://localhost:11435/api/tags
 # → {"models": [...]} ✅
 
 # Ollama no debe escuchar en 0.0.0.0
@@ -411,7 +411,7 @@ touch ~/.credentials
 chmod 600 ~/.credentials
 
 # Añadir el token (obtener desde @BotFather en Telegram)
-echo 'OPENCLAW_TELEGRAM_BOT_TOKEN=tu_token_aqui' >> ~/.credentials
+echo 'OPENCLAW_TELEGRAM_BOT_TOKEN=<TELEGRAM_BOT_TOKEN>' >> ~/.credentials
 ```
 
 #### Paso 2 — Reemplazar token en openclaw.json por variable
@@ -886,10 +886,10 @@ npm audit 2>&1 | grep -E "found [0-9]+"
 
 ```bash
 # DGX
-tailscale ip -4    # Anotar → ej: 100.64.129.87
+tailscale ip -4    # Anotar → ej: <DGX_TAILSCALE_IP>
 
 # UM890
-tailscale ip -4    # Anotar → ej: 100.64.X.Y
+tailscale ip -4    # Anotar → ej: <UM890_TAILSCALE_IP>
 ```
 
 #### Paso 2 — Configurar ACLs en panel de Tailscale
@@ -904,13 +904,13 @@ tailscale ip -4    # Anotar → ej: 100.64.X.Y
   "acls": [
     {
       "action": "accept",
-      "src": ["100.64.X.Y"],
-      "dst": ["100.64.129.87:11434", "100.64.129.87:11435"]
+      "src": ["<UM890_TAILSCALE_IP>"],
+      "dst": ["<DGX_TAILSCALE_IP>:11434", "<DGX_TAILSCALE_IP>:11435"]
     },
     {
       "action": "accept",
-      "src": ["100.64.X.Y"],
-      "dst": ["100.64.129.87:22"]
+      "src": ["<UM890_TAILSCALE_IP>"],
+      "dst": ["<DGX_TAILSCALE_IP>:22"]
     },
     {
       "action": "accept",
@@ -921,17 +921,17 @@ tailscale ip -4    # Anotar → ej: 100.64.X.Y
 }
 ```
 
-> Sustituir `100.64.X.Y` por la IP Tailscale real del UM890.
+> Sustituir `<UM890_TAILSCALE_IP>` por la IP Tailscale real del UM890.
 
 #### Paso 3 — Verificar
 
 ```bash
 # En UM890 (debe funcionar)
-curl http://100.64.129.87:11435/api/tags -u mloco:pass
+curl http://<DGX_TAILSCALE_IP>:11435/api/tags -u <usuario>:<password>
 # → {"models": [...]} ✅
 
 # En DGX (acceso a UM890 que no sea SSH debe fallar)
-curl http://100.64.X.Y:18789 2>&1 | grep -i refused
+curl http://<UM890_TAILSCALE_IP>:18789 2>&1 | grep -i refused
 # → Connection refused ✅
 ```
 
@@ -1087,7 +1087,7 @@ sudo systemctl show ollama | grep OLLAMA_DEBUG
 ```bash
 # En DGX
 tailscale status | grep $(hostname)
-# → spark-be9d [100.64.129.87] ...
+# → spark-be9d [<DGX_TAILSCALE_IP>] ...
 # Usar: spark-be9d
 ```
 
@@ -1095,7 +1095,7 @@ tailscale status | grep $(hostname)
 
 ```bash
 # En UM890
-OLD_IP="100.64.129.87"
+OLD_IP="<DGX_TAILSCALE_IP>"
 NEW_HOST="spark-be9d"
 
 # Continue.dev
@@ -1114,7 +1114,7 @@ find ~/scripts -name "*.sh" -exec sed -i "s/$OLD_IP/$NEW_HOST/g" {} \; 2>/dev/nu
 ping -c 2 spark-be9d
 # → Debe responder ✅
 
-curl http://spark-be9d:11435/api/tags -u mloco:pass
+curl http://spark-be9d:11435/api/tags -u <usuario>:<password>
 # → {"models": [...]} ✅
 ```
 

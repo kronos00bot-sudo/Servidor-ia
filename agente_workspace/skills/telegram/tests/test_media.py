@@ -95,9 +95,9 @@ def test_process_video_media_combines_audio_and_visual(monkeypatch, tmp_path: Pa
     assert "Resumen visual" in (result["text"] or "")
 
 
-def test_process_telegram_media_document_stays_disabled(tmp_path: Path):
+def test_process_telegram_media_document_extracts_text(tmp_path: Path):
     sample_doc = tmp_path / "sample.pdf"
-    sample_doc.write_bytes(b"doc")
+    sample_doc.write_text("hola documento", encoding="utf-8")
 
     class FakeMediaClient:
         def download_attachment(self, message, chat_id, msg_id):
@@ -108,12 +108,50 @@ def test_process_telegram_media_document_stays_disabled(tmp_path: Path):
             }
 
     result = process_telegram_media(
-        {"chat_id": "123", "message_id": 99, "raw_type": "document", "file_id": "d1"},
+        {
+            "chat_id": "123",
+            "message_id": 99,
+            "raw_type": "document",
+            "file_id": "d1",
+            "file_name": "sample.txt",
+            "mime_type": "text/plain",
+        },
         router=None,
         media_client=FakeMediaClient(),
     )
 
     assert result["ok"] is True
     assert result["kind"] == "document"
-    assert result["text"] is None
-    assert "disabled" in (result["error"] or "")
+    assert "hola documento" in (result["text"] or "")
+    assert result["error"] is None
+
+
+def test_process_telegram_media_document_fallback_summary(tmp_path: Path):
+    sample_doc = tmp_path / "sample.bin"
+    sample_doc.write_bytes(b"\x00\x01\x02\x03")
+
+    class FakeMediaClient:
+        def download_attachment(self, message, chat_id, msg_id):
+            return {
+                "ok": True,
+                "kind": "document",
+                "saved_path": str(sample_doc),
+            }
+
+    result = process_telegram_media(
+        {
+            "chat_id": "123",
+            "message_id": 100,
+            "raw_type": "document",
+            "file_id": "d2",
+            "file_name": "sample.bin",
+            "mime_type": "application/octet-stream",
+        },
+        router=None,
+        media_client=FakeMediaClient(),
+    )
+
+    assert result["ok"] is True
+    assert result["kind"] == "document"
+    assert "Se recibio un documento" in (result["text"] or "")
+    assert result["error"] is None

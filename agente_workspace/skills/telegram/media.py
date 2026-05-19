@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import shutil
 import subprocess
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -179,6 +180,108 @@ def _process_video_media(saved_path: Path, msg_id: int, router: TaskRouter) -> D
     }
 
 
+def _read_text_file_best_effort(path: Path, max_chars: int = 4000) -> str:
+    """Read text-like documents with tolerant decoding and bounded output."""
+    raw = path.read_bytes()
+    for encoding in ("utf-8", "latin-1"):
+        try:
+            text = raw.decode(encoding)
+            break
+        except UnicodeDecodeError:
+            text = ""
+    text = " ".join((text or "").split())
+    return text[:max_chars].strip()
+
+
+def _extract_pdf_text(path: Path, timeout_seconds: int = 25, max_chars: int = 4000) -> str:
+    """Extract PDF text using pdftotext when available."""
+    if shutil.which("pdftotext") is None:
+        return ""
+
+    cmd = ["pdftotext", "-layout", str(path), "-"]
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout_seconds)
+    if result.returncode != 0:
+        return ""
+    text = " ".join((result.stdout or "").split())
+    return text[:max_chars].strip()
+
+
+def _summarize_image_document(path: Path, router: TaskRouter) -> str:
+    """Build a short Spanish summary for image documents."""
+    raw = path.read_bytes()
+    image_b64 = base64.b64encode(raw).decode("ascii")
+    prompt = (
+        "Describe brevemente el contenido principal de esta imagen en espanol. "
+        "Responde en 2-4 puntos claros."
+    )
+    route_vision = getattr(router, "route_vision", None)
+    route = route_vision({"type": "document_image", "path": str(path)}) if callable(route_vision) else router.route_chat(prompt)
+    remote = RemoteClient()
+    try:
+        raw_resp = remote.generate(
+            generate_url=route.host,
+            model=route.model,
+            prompt=prompt,
+            timeout=route.timeout,
+            images=[image_b64],
+        )
+    except Exception:
+        fallback = router.route_fallback("vision")
+        raw_resp = remote.generate(
+            generate_url=fallback.host,
+            model=fallback.model,
+            prompt=prompt,
+            timeout=fallback.timeout,
+            images=[image_b64],
+        )
+    return (raw_resp.get("response") or "").strip()
+
+
+def _process_document_media(saved_path: Path, msg_id: int, message: Dict[str, Any], router: TaskRouter) -> Dict[str, Any]:
+    """Best-effort processing for Telegram documents without blocking moderation flow."""
+    mime = (message.get("mime_type") or "").lower()
+    ext = saved_path.suffix.lower()
+    file_name = message.get("file_name") or saved_path.name
+
+    text_ext = {".txt", ".md", ".csv", ".json", ".log", ".py", ".yaml", ".yml", ".xml", ".ini", ".toml"}
+    image_ext = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif"}
+
+    extracted = ""
+    if mime.startswith("text/") or ext in text_ext:
+        extracted = _read_text_file_best_effort(saved_path)
+    elif mime == "application/pdf" or ext == ".pdf":
+        extracted = _extract_pdf_text(saved_path)
+    elif mime.startswith("audio/"):
+        audio = transcribe_file(str(saved_path), int(msg_id))
+        extracted = (audio.get("text") or "").strip()
+    elif mime.startswith("video/"):
+        video = _process_video_media(saved_path, int(msg_id), router=router)
+        extracted = (video.get("text") or "").strip()
+    elif mime.startswith("image/") or ext in image_ext:
+        extracted = _summarize_image_document(saved_path, router=router)
+
+    if extracted:
+        return {
+            "id": msg_id,
+            "text": f"[document] {file_name}\n\n{extracted}",
+            "error": None,
+        }
+
+    size = 0
+    try:
+        size = saved_path.stat().st_size
+    except OSError:
+        pass
+    return {
+        "id": msg_id,
+        "text": (
+            "[document] Se recibio un documento pero no se pudo extraer su contenido automaticamente. "
+            f"Nombre: {file_name}. MIME: {mime or 'desconocido'}. Tamano: {size} bytes."
+        ),
+        "error": None,
+    }
+
+
 def process_telegram_media(message: Dict[str, Any], router: TaskRouter, media_client: Optional[TelegramMediaClient] = None) -> Dict[str, Any]:
     """Download and process a Telegram media message using the shared core processors."""
     media_client = media_client or TelegramMediaClient()
@@ -200,12 +303,14 @@ def process_telegram_media(message: Dict[str, Any], router: TaskRouter, media_cl
         result = transcribe_file(str(saved_path), int(msg_id))
     elif raw_type == "video":
         result = _process_video_media(saved_path, int(msg_id), router=router)
-    elif raw_type in {"photo", "document"}:
+    elif raw_type == "photo":
         result = {
             "id": msg_id,
             "text": None,
-            "error": f"{raw_type} processing is disabled in telegram-only mode",
+            "error": "photo processing is disabled in telegram-only mode",
         }
+    elif raw_type == "document":
+        result = _process_document_media(saved_path, int(msg_id), message=message, router=router)
     else:
         result = {"id": msg_id, "text": None, "error": f"Unsupported media type: {raw_type}"}
 

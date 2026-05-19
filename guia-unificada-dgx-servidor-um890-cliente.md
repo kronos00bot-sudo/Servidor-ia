@@ -53,7 +53,7 @@
 │                                                                   │
 │  🤖 Ollama :11434 (OLLAMA_HOST=0.0.0.0) ← escucha en red       │
 │  🖥️  Open WebUI :3000                                           │
-│  🔑 Tailscale → 100.64.129.87 (WireGuard cifrado)                 │
+│  🔑 Tailscale → <DGX_TAILSCALE_IP> (WireGuard cifrado)                 │
 │  📧 gog — Google Workspace (Gmail, Drive, Calendar...)          │
 │  🧠 MEMORIA → ~/.memoria/memory.md (memoria persistente)        │
 └──────────────────────────┬──────────────────────────────────────┘
@@ -552,7 +552,7 @@ sudo systemctl enable tailscaled
 sudo systemctl start tailscaled
 
 tailscale ip
-# Ejemplo: 100.64.129.87 (esta IP no cambia aunque cambies de red)
+# Ejemplo: <DGX_TAILSCALE_IP> (esta IP no cambia aunque cambies de red)
 ```
 
 ### 12.4 Habilitar MagicDNS (recomendado)
@@ -1386,7 +1386,7 @@ docker run -d \
 
 Acceder en: **http://localhost:3000**
 
-> Todos los modelos locales aparecen automáticamente. Para ver también los modelos del DGX, configura una conexión Ollama adicional apuntando a `http://100.64.129.87:11434` en los ajustes de Open WebUI.
+> Todos los modelos locales aparecen automáticamente. Para ver también los modelos del DGX, configura una conexión Ollama adicional apuntando a `http://<DGX_TAILSCALE_IP>:11434` en los ajustes de Open WebUI.
 
 ---
 
@@ -1412,13 +1412,13 @@ tailscale ip  # Anotar la IP del UM890
 
 ```bash
 # Desde el UM890
-ping 100.64.129.87  # IP de Tailscale del DGX
+ping <DGX_TAILSCALE_IP>  # IP de Tailscale del DGX
 
-curl http://100.64.129.87:11434
+curl http://<DGX_TAILSCALE_IP>:11434
 # → "Ollama is running" ✅
 
 # Ver modelos disponibles en el DGX
-curl http://100.64.129.87:11434/api/tags | python3 -m json.tool | grep name
+curl http://<DGX_TAILSCALE_IP>:11434/api/tags | python3 -m json.tool | grep name
 ```
 
 ### 23.3 VS Code + Continue.dev apuntando al DGX
@@ -1435,12 +1435,12 @@ models:
   - name: Nemotron 3 Super 120B (DGX Spark)
     provider: ollama
     model: nemotron-3-super:120b
-    apiBase: http://100.64.129.87:11434
+    apiBase: http://<DGX_TAILSCALE_IP>:11434
 
   - name: GPT-OSS 120B (DGX Spark)
     provider: ollama
     model: gpt-oss:120b
-    apiBase: http://100.64.129.87:11434
+    apiBase: http://<DGX_TAILSCALE_IP>:11434
 
   - name: Qwen3.5 9B (UM890 Local)
     provider: ollama
@@ -1943,7 +1943,7 @@ python3 ~/Escritorio/Servidor-ia/voz/asistente_voz.py wake
 | `update-initramfs` no existe | Ubuntu 26.04 usa dracut | `sudo dracut --regenerate-all --force` |
 | Modelo tarda 5–15 min | Thinking mode activo | Usar Modelfiles `-es` (sección 19.4) |
 | VRAM al 99%, 1–2 tok/s | `OLLAMA_KV_CACHE_TYPE=q8_0` satura VRAM | Eliminar esa variable del override.conf |
-| Panel web "Unauthorized" | `bind: loopback` o falta token | `bind: lan` + `?token=TU_TOKEN` |
+| Panel web "Unauthorized" | `bind: loopback` o falta token | `bind: lan` + `?token=<WEB_PANEL_TOKEN>` |
 | OpenClaw: `low context window` | `contextWindow` demasiado bajo | Subir a 16384 en openclaw.json y Modelfile |
 | Sesión bloqueada 300+ segundos | Historial supera el contexto | Ejecutar `/clear` en Telegram + num_ctx ≥ 16384 |
 | `rocm-smi` no encontrado | Grupos render/video no aplicados | Hacer logout/login o `newgrp render` |
@@ -2027,7 +2027,7 @@ openclaw skills list
 ip a | grep '192.168'   # IP para el panel web
 
 # Conexión al DGX
-curl http://100.64.129.87:11434   # Verificar Ollama DGX
+curl http://<DGX_TAILSCALE_IP>:11434   # Verificar Ollama DGX
 tailscale status                 # Ver ambos equipos
 ```
 
@@ -2043,7 +2043,7 @@ zramctl                                                                    # →
 systemctl status ollama ai-performance
 systemctl --user status openclaw-gateway
 docker ps | grep open-webui
-curl http://100.64.129.87:11434                                             # → DGX accesible ✅
+curl http://<DGX_TAILSCALE_IP>:11434                                             # → DGX accesible ✅
 ollama list
 ```
 

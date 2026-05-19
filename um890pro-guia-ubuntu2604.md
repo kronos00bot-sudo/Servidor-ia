@@ -553,9 +553,9 @@ openclaw onboard --install-daemon
 
 ```bash
 cat > ~/.openclaw/.credentials << 'EOF'
-OPENCLAW_GATEWAY_TOKEN=TU_TOKEN_GATEWAY
-OPENCLAW_TELEGRAM_BOT_TOKEN=TU_BOT_TOKEN_TELEGRAM
-OPENCLAW_TELEGRAM_OWNER_ID=TU_TELEGRAM_ID
+OPENCLAW_GATEWAY_TOKEN=<GATEWAY_TOKEN>
+OPENCLAW_TELEGRAM_BOT_TOKEN=<TELEGRAM_BOT_TOKEN>
+OPENCLAW_TELEGRAM_OWNER_ID=<TELEGRAM_USER_ID>
 OPENCLAW_IP_LOCAL=192.168.0.12
 EOF
 
@@ -730,10 +730,10 @@ journalctl --user -u openclaw-gateway --since "30 sec ago" | grep -i 'error\|rea
 ```bash
 ip a | grep '192.168'
 # Acceder desde cualquier dispositivo en la red:
-# http://TU_IP:18789/?token=TU_TOKEN
+# http://<WEB_PANEL_HOST>:18789/?token=<WEB_PANEL_TOKEN>
 ```
 
-> ⚠️ Con `bind: loopback` el panel no es accesible desde la red. Usar `bind: lan`. El token va en la URL: `?token=TU_TOKEN`.
+> ⚠️ Con `bind: loopback` el panel no es accesible desde la red. Usar `bind: lan`. El token va en la URL: `?token=<WEB_PANEL_TOKEN>`.
 
 ### 6.8 Comandos desde Telegram
 
@@ -796,7 +796,7 @@ Acceder en: **http://localhost:3000**
 | Modelo tarda 5–15 min en responder | Thinking mode activo generando tokens internos | Usar Modelfiles `-es` con `num_predict` limitado |
 | VRAM al 99%, velocidad 1–2 tok/s | `OLLAMA_KV_CACHE_TYPE=q8_0` satura VRAM | Eliminar esa variable del override.conf |
 | `npm install -g` falla EACCES | Ubuntu requiere sudo para globales | `sudo npm install -g openclaw@latest` |
-| Panel web "Unauthorized" | `bind: loopback` + falta token en URL | `bind: lan` + `?token=TU_TOKEN` |
+| Panel web "Unauthorized" | `bind: loopback` + falta token en URL | `bind: lan` + `?token=<WEB_PANEL_TOKEN>` |
 | `openclaw skill` no encontrado | Comando incorrecto | `openclaw skills list` (plural) |
 | Modelo "not found" en OpenClaw | Nombre sin tag o nombre base sin Modelfile | Usar siempre nombre completo: `gemma4-es`, `qwen35-es` |
 | Docker compose "external volume" | Volumen externo no existe | `docker volume create open-webui` antes de `compose up` |
