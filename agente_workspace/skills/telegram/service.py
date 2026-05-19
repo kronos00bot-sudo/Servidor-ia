@@ -25,6 +25,19 @@ from .utils.config import TelegramConfig
 LOGGER = get_logger(__name__)
 
 
+def _build_english_fallback_draft(transcript: str) -> str:
+    """Build a minimal deterministic English draft when LLM generation is unavailable."""
+    text = " ".join((transcript or "").strip().split())
+    if not text:
+        return "Thanks for your message. Could you share a bit more detail so I can help accurately?"
+    snippet = text[:180].rstrip(" .,!?:;")
+    return (
+        "Thanks for the update. I understand the key point is: "
+        f"\"{snippet}\". "
+        "Could you confirm the next action you want me to take?"
+    )
+
+
 def _build_english_draft(transcript: str, router: TaskRouter, remote: RemoteClient) -> str:
     text = (transcript or "").strip()
     if not text:
@@ -63,11 +76,15 @@ def _build_english_draft(transcript: str, router: TaskRouter, remote: RemoteClie
     pool = concurrent.futures.ThreadPoolExecutor(max_workers=1)
     future = pool.submit(_call)
     try:
-        return future.result(timeout=_LLM_CALL_TIMEOUT)
+        draft = (future.result(timeout=_LLM_CALL_TIMEOUT) or "").strip()
+        if draft:
+            return draft
+        LOGGER.warning("_build_english_draft returned empty response, using local fallback")
+        return _build_english_fallback_draft(text)
     except Exception as exc:
         LOGGER.warning("_build_english_draft timeout/error: %r", exc)
         future.cancel()
-        return ""
+        return _build_english_fallback_draft(text)
     finally:
         pool.shutdown(wait=False, cancel_futures=True)
 
@@ -76,6 +93,13 @@ def _translate_transcript_to_spanish(transcript: str, router: TaskRouter, remote
     text = (transcript or "").strip()
     if not text:
         return ""
+    route_translation = getattr(router, "route_translation", None)
+    if callable(route_translation):
+        route = route_translation(text)
+    else:
+        route = router.route_chat(text)
+    request_timeout = max(int(getattr(route, "timeout", 0) or 0), _LLM_TRANSLATION_TIMEOUT)
+
     prompt = (
         "Traduce al espanol de forma fiel y breve. "
         "Devuelve solo la traduccion final sin comentarios adicionales.\n\n"
@@ -83,12 +107,6 @@ def _translate_transcript_to_spanish(transcript: str, router: TaskRouter, remote
     )
 
     def _call() -> str:
-        route_translation = getattr(router, "route_translation", None)
-        if callable(route_translation):
-            route = route_translation(text)
-        else:
-            route = router.route_chat(text)
-        request_timeout = max(int(getattr(route, "timeout", 0) or 0), _LLM_TRANSLATION_TIMEOUT)
         raw = remote.generate(
             generate_url=route.host,
             model=route.model,
@@ -100,7 +118,7 @@ def _translate_transcript_to_spanish(transcript: str, router: TaskRouter, remote
     pool = concurrent.futures.ThreadPoolExecutor(max_workers=1)
     future = pool.submit(_call)
     try:
-        return future.result(timeout=_LLM_TRANSLATION_TIMEOUT)
+        return future.result(timeout=request_timeout)
     except Exception as exc:
         LOGGER.warning("_translate_transcript_to_spanish timeout/error: %r", exc)
         future.cancel()
@@ -113,6 +131,12 @@ def _translate_approval_note_to_english(note: str, router: TaskRouter, remote: R
     text = (note or "").strip()
     if not text:
         return ""
+    route_translation = getattr(router, "route_translation", None)
+    if callable(route_translation):
+        route = route_translation(text)
+    else:
+        route = router.route_chat(text)
+    request_timeout = max(int(getattr(route, "timeout", 0) or 0), _LLM_TRANSLATION_TIMEOUT)
 
     prompt = (
         "Translate this Spanish approval note into natural English. "
@@ -121,12 +145,6 @@ def _translate_approval_note_to_english(note: str, router: TaskRouter, remote: R
     )
 
     def _call() -> str:
-        route_translation = getattr(router, "route_translation", None)
-        if callable(route_translation):
-            route = route_translation(text)
-        else:
-            route = router.route_chat(text)
-        request_timeout = max(int(getattr(route, "timeout", 0) or 0), _LLM_TRANSLATION_TIMEOUT)
         raw = remote.generate(
             generate_url=route.host,
             model=route.model,
@@ -138,7 +156,7 @@ def _translate_approval_note_to_english(note: str, router: TaskRouter, remote: R
     pool = concurrent.futures.ThreadPoolExecutor(max_workers=1)
     future = pool.submit(_call)
     try:
-        return future.result(timeout=_LLM_TRANSLATION_TIMEOUT)
+        return future.result(timeout=request_timeout)
     except Exception as exc:
         LOGGER.warning("_translate_approval_note_to_english timeout/error: %r", exc)
         future.cancel()

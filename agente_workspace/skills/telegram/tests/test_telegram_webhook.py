@@ -391,6 +391,41 @@ def test_queue_generates_draft_even_if_translation_is_unavailable(monkeypatch):
     assert pending.get("draft_reply_en") == "Here is a concise English draft."
 
 
+def test_queue_uses_local_fallback_draft_when_llm_returns_empty(monkeypatch):
+    LAST_MESSAGE_AT.clear()
+    monkeypatch.setattr(TelegramConfig, "TELEGRAM_MONITORED_CHAT_ID", "-777")
+    monkeypatch.setattr(TelegramConfig, "TELEGRAM_APPROVAL_CHAT_ID", "12345")
+
+    class EmptyRemote(FakeRemote):
+        def generate(self, *args, **kwargs):
+            return {"response": ""}
+
+    app = create_app(router=FakeRouter(), remote=EmptyRemote(), tg_client=FakeClient(), validate_config=False)
+    client = app.test_client()
+    payload = {
+        "message": {
+            "message_id": 301,
+            "chat": {"id": -777, "type": "group", "title": "Equipo"},
+            "from": {"id": 111, "first_name": "Luis"},
+            "text": "Please send me the latest operations status.",
+        }
+    }
+
+    resp = client.post("/telegram/webhook", json=payload, headers=SECRET_HEADER)
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["ok"] is True
+    assert body["queued_for_approval"] is True
+
+    state = TelegramState(state_path=TelegramConfig.PROJECT_DIR / "data" / "telegram_state.json")
+    pending = state.get_pending_approval(body["approval_id"])
+    assert pending is not None
+    assert pending.get("transcript_es") == ""
+    draft = (pending.get("draft_reply_en") or "").strip()
+    assert draft != ""
+    assert "Could you confirm" in draft
+
+
 def test_reject_command_closes_pending_without_sending_to_source(monkeypatch):
     LAST_MESSAGE_AT.clear()
     monkeypatch.setattr(TelegramConfig, "TELEGRAM_MONITORED_CHAT_ID", "-777")
