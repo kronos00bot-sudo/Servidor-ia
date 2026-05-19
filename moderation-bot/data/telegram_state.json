@@ -1,5 +1,5 @@
 {
-  "last_update_id": 59729305,
+  "last_update_id": 59729306,
   "chats": {
     "7434781236": {
       "message_count": 33,
@@ -10,15 +10,15 @@
       "last_proactive_at": ""
     },
     "-5289754689": {
-      "message_count": 59,
-      "media_count": 55,
-      "last_message": "Alright, we are able to get the water heated in. Pressure\n tested. We are going to tomorrow to check. Make sure we are\n sitting good. Then insulate the lines. We didn't want to\n insulate the lines. Let's be sure it's not leaking.",
-      "last_reply": "pending_approval:68",
-      "last_seen": "2026-05-19T11:39:13.647473+00:00",
+      "message_count": 60,
+      "media_count": 56,
+      "last_message": "hey good afternoon all right so what i'll do i'll set up\n projections or what um what we received\n from auto cool and what the plumber the plumber said he\n would be able to get there till monday\n to change the water heater so on monday i could give you a\n run down or how that how that went and\n then i'll send a run down to what was paid and what the\n balance or whatever you know like that\n all right so i'll talk to you guys on monday",
+      "last_reply": "pending_approval:69",
+      "last_seen": "2026-05-19T11:40:23.345143+00:00",
       "last_proactive_at": ""
     }
   },
-  "next_pending_id": 69,
+  "next_pending_id": 70,
   "pending_approvals": {
     "1": {
       "id": "1",
@@ -1037,6 +1037,21 @@
       "source_message_id": 246,
       "media_kind": "audio",
       "created_at": "2026-05-19T11:39:13.570195+00:00",
+      "resolved_at": "",
+      "resolution_note": ""
+    },
+    "69": {
+      "id": "69",
+      "status": "pending",
+      "source_chat_id": "-5289754689",
+      "source_chat_name": "HB",
+      "sender": "Manoel",
+      "transcript": "hey good afternoon all right so what i'll do i'll set up\n projections or what um what we received\n from auto cool and what the plumber the plumber said he\n would be able to get there till monday\n to change the water heater so on monday i could give you a\n run down or how that how that went and\n then i'll send a run down to what was paid and what the\n balance or whatever you know like that\n all right so i'll talk to you guys on monday",
+      "transcript_es": "Hola buenas tardes, vale, haré las proyecciones de lo que recibimos de Auto Cool y lo que el plomero dijo que podría llegar hasta el lunes para cambiar el calentador de agua; el lunes te daré un resumen de cómo fue y luego enviaré otro con lo pagado y el saldo. Entonces hablaremos el lunes.",
+      "draft_reply_en": "Sounds good! Let me know if anything comes up before then—I’ll be ready for the update on Monday.",
+      "source_message_id": 247,
+      "media_kind": "audio",
+      "created_at": "2026-05-19T11:40:23.263591+00:00",
       "resolved_at": "",
       "resolution_note": ""
     }
