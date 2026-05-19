@@ -28,8 +28,6 @@ Flujo resumido:
 - agente_workspace: núcleo de trabajo del agente y skills.
 - agente_workspace/skills/telegram: implementación actual de Telegram.
 - moderation-bot: datos operativos (estado, logs, media procesada) usados por la skill.
-- whatsapp-agent: código legado de pipeline offline (referencia histórica).
-- whatsapp-agent-smoketest: entorno de prueba rápida legado.
 - voz: utilidades de asistente por voz local.
 
 ## Arquitectura de Telegram
@@ -290,4 +288,11 @@ Pistas rápidas:
 
 ## Notas de legado
 
-Las carpetas whatsapp-agent y whatsapp-agent-smoketest se conservan como referencia histórica y utilidades previas. El foco operativo vigente está en Telegram.
+- **whatsapp-agent** y **whatsapp-agent-smoketest** retirados (mayo 2026). El pipeline
+  de procesamiento de chats exportados de WhatsApp (parseo, STT, visión, traducción)
+  fue completamente eliminado del repositorio. El canal activo y mantenido es Telegram.
+- Los archivos de caché de audio con nomenclatura de origen WhatsApp que existían en
+  `moderation-bot/media/` y `moderation-bot/data/transcriptions/` también fueron
+  eliminados. No afectan al funcionamiento actual del bot de Telegram.
+
+Se retiraron componentes de legado no alineados con el foco actual. El canal operativo vigente es Telegram.
