@@ -171,6 +171,49 @@ def test_process_update_media_failure_returns_user_feedback():
     assert "fallo el procesamiento multimedia" in body["reply"]
 
 
+def test_process_update_media_bypasses_rate_limit_for_bursts(monkeypatch):
+    LAST_MESSAGE_AT.clear()
+
+    def fake_process_telegram_media(*args, **kwargs):
+        return {"ok": True, "kind": "document", "text": None, "error": "document processing is disabled"}
+
+    monkeypatch.setattr("skills.telegram.service.process_telegram_media", fake_process_telegram_media)
+    monkeypatch.setattr(TelegramConfig, "TELEGRAM_MONITORED_CHAT_ID", "12345")
+    monkeypatch.setattr(TelegramConfig, "TELEGRAM_APPROVAL_CHAT_ID", "12345")
+
+    app = create_app(router=FakeRouter(), remote=FakeRemote(), tg_client=FakeClient(), validate_config=False)
+    client = app.test_client()
+    payload_1 = {
+        "message": {
+            "message_id": 30,
+            "chat": {"id": 12345, "type": "private"},
+            "from": {"first_name": "Ana"},
+            "document": {"file_id": "doc_a", "file_name": "a.pdf", "mime_type": "application/pdf"},
+        }
+    }
+    payload_2 = {
+        "message": {
+            "message_id": 31,
+            "chat": {"id": 12345, "type": "private"},
+            "from": {"first_name": "Ana"},
+            "document": {"file_id": "doc_b", "file_name": "b.pdf", "mime_type": "application/pdf"},
+        }
+    }
+
+    resp_1 = client.post("/telegram/webhook", json=payload_1, headers=SECRET_HEADER)
+    resp_2 = client.post("/telegram/webhook", json=payload_2, headers=SECRET_HEADER)
+
+    assert resp_1.status_code == 200
+    assert resp_2.status_code == 200
+    body_1 = resp_1.get_json()
+    body_2 = resp_2.get_json()
+    assert body_1["ok"] is True
+    assert body_2["ok"] is True
+    assert body_1.get("queued_for_approval") is True
+    assert body_2.get("queued_for_approval") is True
+    assert body_2.get("ignored") != "Rate limited"
+
+
 def test_group_message_is_queued_for_approval(monkeypatch):
     LAST_MESSAGE_AT.clear()
     monkeypatch.setattr(TelegramConfig, "TELEGRAM_MONITORED_CHAT_ID", "-777")
@@ -310,6 +353,44 @@ def test_spanish_approval_note_is_translated_to_english(monkeypatch):
     assert sent_to_group[-1][1] == "Please keep the delivery estimate updated."
 
 
+def test_queue_generates_draft_even_if_translation_is_unavailable(monkeypatch):
+    LAST_MESSAGE_AT.clear()
+    monkeypatch.setattr(TelegramConfig, "TELEGRAM_MONITORED_CHAT_ID", "-777")
+    monkeypatch.setattr(TelegramConfig, "TELEGRAM_APPROVAL_CHAT_ID", "12345")
+
+    class TranslationUnavailableRemote(FakeRemote):
+        def generate(self, *args, **kwargs):
+            prompt = kwargs.get("prompt", "")
+            if "Traduce al espanol de forma fiel y breve" in prompt:
+                return {"response": ""}
+            if "Write a concise, natural English response" in prompt:
+                return {"response": "Here is a concise English draft."}
+            return {"response": "respuesta de prueba"}
+
+    app = create_app(router=FakeRouter(), remote=TranslationUnavailableRemote(), tg_client=FakeClient(), validate_config=False)
+    client = app.test_client()
+    payload = {
+        "message": {
+            "message_id": 300,
+            "chat": {"id": -777, "type": "group", "title": "Equipo"},
+            "from": {"id": 111, "first_name": "Luis"},
+            "text": "Can you send the weekly update?",
+        }
+    }
+
+    resp = client.post("/telegram/webhook", json=payload, headers=SECRET_HEADER)
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["ok"] is True
+    assert body["queued_for_approval"] is True
+
+    state = TelegramState(state_path=TelegramConfig.PROJECT_DIR / "data" / "telegram_state.json")
+    pending = state.get_pending_approval(body["approval_id"])
+    assert pending is not None
+    assert pending.get("transcript_es") == ""
+    assert pending.get("draft_reply_en") == "Here is a concise English draft."
+
+
 def test_reject_command_closes_pending_without_sending_to_source(monkeypatch):
     LAST_MESSAGE_AT.clear()
     monkeypatch.setattr(TelegramConfig, "TELEGRAM_MONITORED_CHAT_ID", "-777")
@@ -398,6 +479,56 @@ def test_cannot_approve_after_reject(monkeypatch):
 
     sent_to_group = [call for call in tg_client.calls if call[0] == "-777"]
     assert len(sent_to_group) == 0
+
+
+def test_approve_regenerates_draft_when_missing(monkeypatch):
+    LAST_MESSAGE_AT.clear()
+    monkeypatch.setattr(TelegramConfig, "TELEGRAM_MONITORED_CHAT_ID", "-777")
+    monkeypatch.setattr(TelegramConfig, "TELEGRAM_APPROVAL_CHAT_ID", "12345")
+
+    class RecoverDraftRemote(FakeRemote):
+        def generate(self, *args, **kwargs):
+            prompt = kwargs.get("prompt", "")
+            if "Write a concise, natural English response" in prompt:
+                return {"response": "Recovered English draft."}
+            return {"response": "respuesta de prueba"}
+
+    tg_client = FakeClient()
+    app = create_app(router=FakeRouter(), remote=RecoverDraftRemote(), tg_client=tg_client, validate_config=False)
+    client = app.test_client()
+
+    queue_payload = {
+        "message": {
+            "message_id": 41,
+            "chat": {"id": -777, "type": "group", "title": "Equipo"},
+            "from": {"id": 111, "first_name": "Luis"},
+            "text": "Please provide the status update.",
+        }
+    }
+    queue_resp = client.post("/telegram/webhook", json=queue_payload, headers=SECRET_HEADER)
+    assert queue_resp.status_code == 200
+    approval_id = queue_resp.get_json()["approval_id"]
+
+    state = TelegramState(state_path=TelegramConfig.PROJECT_DIR / "data" / "telegram_state.json")
+    pending = state.get_pending_approval(approval_id)
+    assert pending is not None
+    state.data.setdefault("pending_approvals", {}).setdefault(approval_id, {})["draft_reply_en"] = ""
+    state.save()
+
+    approve_payload = {
+        "message": {
+            "message_id": 42,
+            "chat": {"id": 12345, "type": "private"},
+            "from": {"id": 999, "first_name": "Owner"},
+            "text": f"/aprobar {approval_id}",
+        }
+    }
+    approve_resp = client.post("/telegram/webhook", json=approve_payload, headers=SECRET_HEADER)
+    assert approve_resp.status_code == 200
+    approve_body = approve_resp.get_json()
+    assert approve_body["ok"] is True
+    sent_to_group = [call for call in tg_client.calls if call[0] == "-777"]
+    assert sent_to_group[-1][1] == "Recovered English draft."
 
 
 def test_group_message_not_monitored_when_config_missing(monkeypatch):

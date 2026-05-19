@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import time
 from typing import Any, Dict, Optional
 
@@ -44,6 +45,64 @@ class TelegramPoller:
         self.polling_client = polling_client or TelegramPollingClient()
         self.state = state or TelegramState()
         self.media_client = media_client or TelegramMediaClient()
+        self._startup_alert_sent = False
+
+    def _validate_monitored_chat_access(self) -> None:
+        """Best-effort startup validation to avoid silent misconfiguration."""
+        monitored_chat_id = str(TelegramConfig.TELEGRAM_MONITORED_CHAT_ID or "").strip()
+        if not monitored_chat_id:
+            return
+
+        token = self.polling_client.token
+        url = f"https://api.telegram.org/bot{token}/getChat"
+        try:
+            resp = self.polling_client.http.get(url, params={"chat_id": monitored_chat_id}, timeout=15)
+            data = resp.json() if resp is not None else {}
+            if not isinstance(data, dict) or not data.get("ok"):
+                raise RuntimeError("Unexpected getChat response")
+            chat = data.get("result") or {}
+            LOGGER.info(
+                "poller_startup_check ok monitored_chat_id=%s chat_type=%s title=%s",
+                monitored_chat_id,
+                chat.get("type"),
+                chat.get("title") or chat.get("username") or chat.get("first_name") or "",
+            )
+        except Exception as exc:
+            LOGGER.error(
+                "poller_startup_check failed monitored_chat_id=%s error=%r",
+                monitored_chat_id,
+                exc,
+            )
+            if self._startup_alert_sent:
+                return
+            self._startup_alert_sent = True
+            approval_chat_id = str(TelegramConfig.TELEGRAM_APPROVAL_CHAT_ID or TelegramConfig.TELEGRAM_ALLOWED_CHAT_ID or "").strip()
+            if approval_chat_id:
+                self.tg_client.send_text(
+                    approval_chat_id,
+                    (
+                        "[alerta] El poller de Telegram esta activo, pero no puede acceder al chat monitorizado.\n"
+                        f"chat_id configurado: {monitored_chat_id}\n"
+                        "Motivo probable: chat_id incorrecto o bot sin acceso al grupo."
+                    ),
+                )
+
+    def _validate_required_bot_username(self) -> None:
+        """Fail fast when the configured bot identity does not match expected."""
+        required = os.getenv("OPENCLAW_TELEGRAM_REQUIRED_BOT_USERNAME", "").strip().lstrip("@").lower()
+        if not required:
+            return
+
+        token = self.polling_client.token
+        if not token:
+            raise RuntimeError("Missing Telegram bot token")
+
+        url = f"https://api.telegram.org/bot{token}/getMe"
+        resp = self.polling_client.http.get(url, timeout=15)
+        data = resp.json() if resp is not None else {}
+        username = str(((data or {}).get("result") or {}).get("username") or "").strip().lstrip("@").lower()
+        if username != required:
+            raise RuntimeError(f"Unexpected Telegram bot username: got '{username}', expected '{required}'")
 
     def run_once(self, offset: Optional[int] = None) -> int:
         current_offset = offset if offset is not None else self.state.get_last_update_id()
@@ -82,6 +141,8 @@ class TelegramPoller:
 
     def run_forever(self, sleep_seconds: int = 2) -> None:
         offset = None
+        self._validate_required_bot_username()
+        self._validate_monitored_chat_access()
         while True:
             try:
                 LOGGER.info(f"run_forever: starting polling cycle with offset={offset}")

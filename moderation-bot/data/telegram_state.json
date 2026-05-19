@@ -1,5 +1,5 @@
 {
-  "last_update_id": 59729252,
+  "last_update_id": 59729258,
   "chats": {
     "7434781236": {
       "message_count": 33,
@@ -10,15 +10,15 @@
       "last_proactive_at": ""
     },
     "-5289754689": {
-      "message_count": 7,
-      "media_count": 4,
-      "last_message": "The book is on the table.",
-      "last_reply": "pending_approval:16",
-      "last_seen": "2026-05-18T19:19:18.761478+00:00",
+      "message_count": 12,
+      "media_count": 8,
+      "last_message": "Hey Waze-y guy. Alright, yeah, yeah. I was kind of off\n island for a few weeks. So that's why I didn't get a report\n yet. I was in a meeting just now. So I wasn't able to\n confirm that I'll be back in Nassau tomorrow.\n So I'll stop there between tomorrow and Friday to give a\n report. Yeah. So we still go forward with the moment of the\n electronics and all of that.\n I'm supposed to tell you guys that by y'all sending me $200\n a month, they're actually charging me about $31 to receive\n money from y'all.\n Not $31 to me for cleaning products or whatever.\n Yeah. So you probably have to send about $250 from now on.\n So to absorb the cleaning, absorb the bike and feet. And\n then you can get the cleaning products with that extra.\n You know, like absorbing the cleaning products plus the\n bike feet. Yeah. So it'll be like, yeah.\n So I'll send it as soon as I get a report on either\n tomorrow or Friday.\n I'll send something fresh to give you a detail on removing\n the stuff that we need to remove a",
+      "last_reply": "pending_approval:21",
+      "last_seen": "2026-05-19T10:51:52.921609+00:00",
       "last_proactive_at": ""
     }
   },
-  "next_pending_id": 17,
+  "next_pending_id": 22,
   "pending_approvals": {
     "1": {
       "id": "1",
@@ -257,6 +257,81 @@
       "source_message_id": 192,
       "media_kind": "voice",
       "created_at": "2026-05-18T19:19:18.559007+00:00",
+      "resolved_at": "",
+      "resolution_note": ""
+    },
+    "17": {
+      "id": "17",
+      "status": "pending",
+      "source_chat_id": "-5289754689",
+      "source_chat_name": "HB",
+      "sender": "Manoel",
+      "transcript": "[text] No se pudo transcribir contenido. error=sin detalle",
+      "transcript_es": "",
+      "draft_reply_en": "",
+      "source_message_id": 194,
+      "media_kind": "text",
+      "created_at": "2026-05-19T10:41:55.989636+00:00",
+      "resolved_at": "",
+      "resolution_note": ""
+    },
+    "18": {
+      "id": "18",
+      "status": "pending",
+      "source_chat_id": "-5289754689",
+      "source_chat_name": "HB",
+      "sender": "Manoel",
+      "transcript": "Yeah, so everything I see that is bleeding\n And it's bleeding\n Taking them out\n Yeah, that's why I wanted to change the ozone in here. I\n was blind\n but\n all\n Want to go for the dot so the best that is yet just get\n better the things with bleeding\n And treat the rest\n You know, I'm just spread them they saw it\n Things which you can open up and really kill the more\n inside, you know, you could do the best thing it was\n the ozone better ball can't grow but I\n understand so\n The basic option would be\n Just get rid of\n Whenever someone whoever moving\n Whoever moves and we'll just get them stuff back\n No\n When they move\n Oh\n when they move in.",
+      "transcript_es": "",
+      "draft_reply_en": "",
+      "source_message_id": 196,
+      "media_kind": "audio",
+      "created_at": "2026-05-19T10:43:49.125268+00:00",
+      "resolved_at": "",
+      "resolution_note": ""
+    },
+    "19": {
+      "id": "19",
+      "status": "pending",
+      "source_chat_id": "-5289754689",
+      "source_chat_name": "HB",
+      "sender": "Manoel",
+      "transcript": "Hey, good morning guys.\n Here now, so now, back in town finally.\n I said with the guy tomorrow to be on site.\n So I'll give you guys an update tomorrow on site.\n And then I'll send the information to you all to us this\n afternoon.\n So sorry for the inconvenience.\n Yeah, I'm going to give you all an update.\n I was doing some work out in Abaco.\n Yeah, so back in town now.\n Just reached this morning.\n I'll be on site tomorrow.",
+      "transcript_es": "Hola, buenos días chicos.\nAquí ahora, ahora mismo, finalmente de vuelta en el pueblo.\nLe dije al tipo que mañana estaríamos en el sitio.\nEntonces les daré una actualización mañana en el sitio.\nLuego les enviaré la información a todos nosotros esta tarde.\nAsí que lo siento por los inconvenientes.\nSí, voy a darles una actualización a todos.\nEstaba trabajando en Abaco.\nSí, entonces ahora estamos de vuelta en el pueblo.\nLlegué esta mañana.\nEstaré en el sitio mañana.",
+      "draft_reply_en": "Hey! Welcome back. Looking forward to the site update tomorrow. Let me know if you need anything before then.",
+      "source_message_id": 197,
+      "media_kind": "audio",
+      "created_at": "2026-05-19T10:45:34.193298+00:00",
+      "resolved_at": "",
+      "resolution_note": ""
+    },
+    "20": {
+      "id": "20",
+      "status": "pending",
+      "source_chat_id": "-5289754689",
+      "source_chat_name": "HB",
+      "sender": "Manoel",
+      "transcript": "So my apologies for yelling back to you so nicely.\n I just wanted to finish a project off Island at the moment.\n So that's why I wasn't in touch.",
+      "transcript_es": "Mis disculpas por haberte gritado de vuelta tan amablemente. Solo quería terminar un proyecto fuera de la isla ahora. Esa es la razón por la que no estuve en contacto.",
+      "draft_reply_en": "No worries at all! I hope wrapping up the project on the island went smoothly. Let me know if you need anything or just want to catch up.",
+      "source_message_id": 198,
+      "media_kind": "audio",
+      "created_at": "2026-05-19T10:47:20.747982+00:00",
+      "resolved_at": "",
+      "resolution_note": ""
+    },
+    "21": {
+      "id": "21",
+      "status": "pending",
+      "source_chat_id": "-5289754689",
+      "source_chat_name": "HB",
+      "sender": "Manoel",
+      "transcript": "Hey Waze-y guy. Alright, yeah, yeah. I was kind of off\n island for a few weeks. So that's why I didn't get a report\n yet. I was in a meeting just now. So I wasn't able to\n confirm that I'll be back in Nassau tomorrow.\n So I'll stop there between tomorrow and Friday to give a\n report. Yeah. So we still go forward with the moment of the\n electronics and all of that.\n I'm supposed to tell you guys that by y'all sending me $200\n a month, they're actually charging me about $31 to receive\n money from y'all.\n Not $31 to me for cleaning products or whatever.\n Yeah. So you probably have to send about $250 from now on.\n So to absorb the cleaning, absorb the bike and feet. And\n then you can get the cleaning products with that extra.\n You know, like absorbing the cleaning products plus the\n bike feet. Yeah. So it'll be like, yeah.\n So I'll send it as soon as I get a report on either\n tomorrow or Friday.\n I'll send something fresh to give you a detail on removing\n the stuff that we need to remove and dump it up.\n And then a regular thing we can read through.",
+      "transcript_es": "Hey, chico de Waze. Vale, sí, sí. Estuve algo fuera de la isla unas semanas. Entonces por eso aún no recibí un informe. Estaba en una reunión ahora mismo. Entonces no pude confirmar que estaré en Nasáu mañana. Entonces pararé allí entre mañana y viernes para dar un informe. Sí. Entonces seguimos adelante con el momento de la electrónica y todo eso. Se supone que debo decirles que, al enviarme ustedes $200 al mes, realmente me están cobrando alrededor de $31 para recibir su dinero. No son $31 para mí para productos de limpieza o lo que sea. Sí. Así que probablemente tengan que enviar unos $250 a partir de ahora. Así para absorber la limpieza, absorber la bicicleta y los pies. Luego pueden obtener los productos de limpieza con ese extra. Saben, como absorber los productos de limpieza más los pies de la bicicleta. Sí. Así será, sí. Lo enviaré tan pronto como reciba un informe ya sea mañana o viernes. Enviaré algo fresco para darles un detalle sobre cómo eliminar lo que necesitamos eliminar y desecharlo. Y luego una cosa regular que podemos leer.",
+      "draft_reply_en": "Hey! Thanks for the update. Sounds like you’ve been busy, but we’ll wait for your report whenever you can get it—either tomorrow or Friday.  \nJust let us know the exact amount you need once you factor in the $31 fee, and we’ll adjust our contributions accordingly. If you need any help pulling together the details or coordinating the cleanup, just shout. Looking forward to the fresh rundown!",
+      "source_message_id": 199,
+      "media_kind": "audio",
+      "created_at": "2026-05-19T10:51:52.689837+00:00",
       "resolved_at": "",
       "resolution_note": ""
     }

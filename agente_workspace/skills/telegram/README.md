@@ -16,6 +16,21 @@ Polling local:
 python -m skills.telegram.telegram_skill --poll
 ```
 
+Operacion continua obligatoria para produccion:
+
+- Ejecutar el poller como servicio systemd de usuario (`openclaw-telegram-poller.service`).
+- Evitar depender de terminal abierta o sesiones interactivas.
+- Mantener una sola instancia del poller por token para evitar `409 Conflict` en `getUpdates`.
+
+Comandos de referencia:
+
+```bash
+systemctl --user daemon-reload
+systemctl --user enable --now openclaw-telegram-poller.service
+systemctl --user status openclaw-telegram-poller.service --no-pager
+loginctl enable-linger "$USER"
+```
+
 Ciclo proactivo puntual:
 
 ```bash

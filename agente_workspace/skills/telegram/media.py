@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import base64
+import subprocess
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from skills.telegram.routing.remote_client import RemoteClient
 from skills.telegram.routing.task_router import TaskRouter
 from skills.telegram.transcriber import transcribe_file
 from skills.telegram.utils.http_client import HttpClient
@@ -71,6 +74,111 @@ def _default_suffix(raw_type: str) -> str:
     }.get(raw_type, ".bin")
 
 
+def _extract_video_frames(video_path: Path, output_dir: Path, interval_seconds: int, max_frames: int = 3) -> list[Path]:
+    """Extract a small set of frames for visual summarization."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    pattern = output_dir / "frame_%03d.jpg"
+    safe_interval = max(1, int(interval_seconds or 30))
+    cmd = [
+        TelegramConfig.FFMPEG_BIN,
+        "-y",
+        "-loglevel",
+        "error",
+        "-i",
+        str(video_path),
+        "-vf",
+        f"fps=1/{safe_interval}",
+        "-frames:v",
+        str(max(1, int(max_frames))),
+        str(pattern),
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=40)
+    if result.returncode != 0:
+        raise RuntimeError((result.stderr or "ffmpeg failed extracting frames").strip())
+    return sorted(output_dir.glob("frame_*.jpg"))
+
+
+def _build_video_visual_summary(video_path: Path, router: TaskRouter, remote: RemoteClient, msg_id: int) -> str:
+    """Generate a short visual summary of sampled video frames."""
+    frames_dir = TelegramConfig.PROJECT_DIR / "media" / "processed" / "video_frames" / f"{int(msg_id):04d}"
+    frames = _extract_video_frames(
+        video_path=video_path,
+        output_dir=frames_dir,
+        interval_seconds=TelegramConfig.VIDEO_FRAME_INTERVAL,
+        max_frames=3,
+    )
+    if not frames:
+        return ""
+
+    images_b64: list[str] = []
+    for frame in frames:
+        raw = frame.read_bytes()
+        images_b64.append(base64.b64encode(raw).decode("ascii"))
+
+    prompt = (
+        "Describe briefly what is happening in these video frames. "
+        "Return 2-4 concise bullet points in Spanish."
+    )
+    route_vision = getattr(router, "route_vision", None)
+    route = route_vision({"type": "video", "path": str(video_path)}) if callable(route_vision) else router.route_chat(prompt)
+    try:
+        raw = remote.generate(
+            generate_url=route.host,
+            model=route.model,
+            prompt=prompt,
+            timeout=route.timeout,
+            images=images_b64,
+        )
+    except Exception:
+        fallback = router.route_fallback("vision")
+        raw = remote.generate(
+            generate_url=fallback.host,
+            model=fallback.model,
+            prompt=prompt,
+            timeout=fallback.timeout,
+            images=images_b64,
+        )
+    return (raw.get("response") or "").strip()
+
+
+def _process_video_media(saved_path: Path, msg_id: int, router: TaskRouter) -> Dict[str, Any]:
+    """Combine audio transcription and sampled-frame visual summary for videos."""
+    transcript_result = transcribe_file(str(saved_path), int(msg_id))
+    transcript_text = (transcript_result.get("text") or "").strip()
+    transcript_error = (transcript_result.get("error") or "").strip()
+
+    visual_summary = ""
+    visual_error = ""
+    try:
+        visual_summary = _build_video_visual_summary(saved_path, router=router, remote=RemoteClient(), msg_id=msg_id)
+    except Exception as exc:
+        visual_error = str(exc)
+
+    sections: list[str] = []
+    if transcript_text:
+        sections.append(f"Transcripcion de audio:\n{transcript_text}")
+    if visual_summary:
+        sections.append(f"Resumen visual:\n{visual_summary}")
+
+    if sections:
+        return {
+            "id": msg_id,
+            "text": "\n\n".join(sections),
+            "error": None,
+            "audio_error": transcript_error or None,
+            "visual_error": visual_error or None,
+        }
+
+    errors = [e for e in [transcript_error, visual_error] if e]
+    return {
+        "id": msg_id,
+        "text": None,
+        "error": "; ".join(errors) if errors else "video processing failed",
+        "audio_error": transcript_error or None,
+        "visual_error": visual_error or None,
+    }
+
+
 def process_telegram_media(message: Dict[str, Any], router: TaskRouter, media_client: Optional[TelegramMediaClient] = None) -> Dict[str, Any]:
     """Download and process a Telegram media message using the shared core processors."""
     media_client = media_client or TelegramMediaClient()
@@ -90,7 +198,9 @@ def process_telegram_media(message: Dict[str, Any], router: TaskRouter, media_cl
 
     if raw_type in {"voice", "audio"}:
         result = transcribe_file(str(saved_path), int(msg_id))
-    elif raw_type in {"photo", "document", "video"}:
+    elif raw_type == "video":
+        result = _process_video_media(saved_path, int(msg_id), router=router)
+    elif raw_type in {"photo", "document"}:
         result = {
             "id": msg_id,
             "text": None,

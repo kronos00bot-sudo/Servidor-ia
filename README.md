@@ -152,6 +152,66 @@ source skills/telegram/.venv/bin/activate
 python -m skills.telegram.telegram_skill --poll --sleep 2
 ```
 
+### 2.1) Operacion continua obligatoria (systemd user service)
+
+Para produccion local, el poller NO debe depender de una terminal abierta.
+Debe ejecutarse como servicio de usuario de systemd con reinicio automatico.
+
+Crear archivo de entorno:
+
+```bash
+mkdir -p ~/.config/openclaw
+cat > ~/.config/openclaw/telegram-poller.env << 'EOF'
+OPENCLAW_TELEGRAM_MONITORED_CHAT_ID=-5289754689
+OPENCLAW_TELEGRAM_APPROVAL_CHAT_ID=7434781236
+TELEGRAM_RATE_LIMIT_SECONDS=1
+PYTHONUNBUFFERED=1
+EOF
+```
+
+Crear servicio:
+
+```bash
+mkdir -p ~/.config/systemd/user
+cat > ~/.config/systemd/user/openclaw-telegram-poller.service << 'EOF'
+[Unit]
+Description=OpenClaw Telegram Poller (moderation)
+After=network-online.target
+Wants=network-online.target
+StartLimitBurst=5
+StartLimitIntervalSec=60
+
+[Service]
+Type=simple
+WorkingDirectory=/home/mloco/Escritorio/Servidor-ia/agente_workspace
+Environment=HOME=/home/mloco
+Environment=PATH=/usr/bin:/home/mloco/.local/bin
+EnvironmentFile=/home/mloco/.config/openclaw/telegram-poller.env
+ExecStart=/home/mloco/Escritorio/Servidor-ia/agente_workspace/skills/telegram/.venv/bin/python -m skills.telegram.telegram_skill --poll --sleep 2
+Restart=always
+RestartSec=3
+TimeoutStopSec=20
+KillMode=control-group
+
+[Install]
+WantedBy=default.target
+EOF
+```
+
+Activar y verificar:
+
+```bash
+systemctl --user daemon-reload
+systemctl --user enable --now openclaw-telegram-poller.service
+systemctl --user status openclaw-telegram-poller.service --no-pager
+loginctl enable-linger "$USER"
+```
+
+Nota operativa:
+
+- Ejecutar una sola instancia de poller por bot/token.
+- Si hay dos instancias en paralelo, Telegram responde 409 Conflict en getUpdates.
+
 ### 3) Ciclo proactivo puntual
 
 ```bash
@@ -264,6 +324,8 @@ Pistas rápidas:
   - revisar cabecera X-Telegram-Bot-Api-Secret-Token y OPENCLAW_TELEGRAM_WEBHOOK_SECRET.
 - Poller no procesa mensajes:
   - validar token del bot, conectividad a api.telegram.org y last_update_id en estado.
+  - confirmar que el servicio `openclaw-telegram-poller.service` este `active (running)`.
+  - revisar conflictos 409 si hubo mas de un poller ejecutandose a la vez.
 - Audio sin transcripción:
   - validar ffmpeg/ffprobe,
   - revisar conectividad y timeout a DGX_WHISPER_URL,

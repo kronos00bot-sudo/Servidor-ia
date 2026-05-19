@@ -243,6 +243,10 @@ def _handle_approval_command(
     if note:
         translated_note = _translate_approval_note_to_english(note, router=router, remote=remote)
         final_reply = translated_note or final_reply
+    elif not final_reply:
+        transcript = str(item.get("transcript") or "").strip()
+        if transcript and "No se pudo transcribir contenido" not in transcript:
+            final_reply = _build_english_draft(transcript, router=router, remote=remote)
     if not final_reply:
         reply = "No hay borrador para aprobar. Usa /aprobar <id> <texto_en_ingles>."
         outbound = tg_client.send_text(chat_id, reply)
@@ -311,7 +315,8 @@ def process_update(
         if chat_id != allowed_normalized:
             return {"ok": True, "ignored": "Chat not allowed"}
 
-    if is_rate_limited(chat_id, min_interval):
+    # No aplicar rate limit a multimedia para no perder rafagas de archivos/importaciones.
+    if not message.get("has_media") and is_rate_limited(chat_id, min_interval):
         return {"ok": True, "ignored": "Rate limited"}
 
     LOGGER.info(f"[process_update] approval_chat_id={approval_chat_id} chat_id={chat_id} is_command={is_command}")
@@ -382,14 +387,14 @@ def process_update(
             )
         else:
             transcript_es = _translate_transcript_to_spanish(transcript, router=router, remote=remote)
-            if transcript_es:
-                draft_reply = _build_english_draft(transcript, router=router, remote=remote)
-            else:
+            if not transcript_es:
                 LOGGER.warning(
                     "approval_queue_skip_draft chat_id=%s message_id=%s reason=translation_unavailable",
                     chat_id,
                     message.get("message_id"),
                 )
+            # El borrador en ingles no debe depender de la traduccion al espanol.
+            draft_reply = _build_english_draft(transcript, router=router, remote=remote)
         approval_id = state.create_pending_approval(
             source_chat_id=chat_id,
             source_chat_name=message.get("chat_title") or chat_id,

@@ -23,5 +23,8 @@
 - 🎯 Estilo: Casual pero preciso
 - 📊 Formato: Respuestas directas y soluciones prácticas
 
+## Herramientas disponibles confirmadas
+- **gog**: Google Workspace CLI (v0.16.0) instalado y configurado para trabajar con Gmail, Calendar, Drive, Contacts, Sheets, Docs y otros servicios de Google Workspace. Verificado funcional el 2026-05-19.
+
 ---
 *Memoria sincronizada - Kronos v1.0*
