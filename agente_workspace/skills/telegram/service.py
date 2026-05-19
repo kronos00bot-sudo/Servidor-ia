@@ -26,15 +26,15 @@ LOGGER = get_logger(__name__)
 
 
 def _build_english_fallback_draft(transcript: str) -> str:
-    """Build a minimal deterministic English draft when LLM generation is unavailable."""
+    """Build a minimal deterministic Spanish draft when LLM generation is unavailable."""
     text = " ".join((transcript or "").strip().split())
     if not text:
-        return "Thanks for your message. Could you share a bit more detail so I can help accurately?"
+        return "Gracias por tu mensaje. Puedes compartir un poco más de detalle para ayudarte mejor?"
     snippet = text[:180].rstrip(" .,!?:;")
     return (
-        "Thanks for the update. I understand the key point is: "
+        "Gracias por la actualización. Entiendo que el punto clave es: "
         f"\"{snippet}\". "
-        "Could you confirm the next action you want me to take?"
+        "Podrías confirmar la siguiente acción que quieres que tome?"
     )
 
 
@@ -44,10 +44,10 @@ def _build_english_draft(transcript: str, router: TaskRouter, remote: RemoteClie
         return ""
 
     prompt = (
-        "You are an assistant replying in a group chat. "
-        "Write a concise, natural English response based on this message transcript. "
-        "Keep it practical and friendly. Do not mention that this is a draft.\n\n"
-        f"Transcript:\n{text}"
+        "Eres un asistente respondiendo en un chat grupal. "
+        "Escribe una respuesta breve y natural en espanol a partir de esta transcripcion. "
+        "Manten un tono practico y amable. No menciones que esto es un borrador.\n\n"
+        f"Transcripcion:\n{text}"
     )
 
     def _call() -> str:
@@ -127,8 +127,8 @@ def _translate_transcript_to_spanish(transcript: str, router: TaskRouter, remote
         pool.shutdown(wait=False, cancel_futures=True)
 
 
-def _translate_approval_note_to_english(note: str, router: TaskRouter, remote: RemoteClient) -> str:
-    text = (note or "").strip()
+def _translate_spanish_text_to_english(text: str, router: TaskRouter, remote: RemoteClient) -> str:
+    text = (text or "").strip()
     if not text:
         return ""
     route_translation = getattr(router, "route_translation", None)
@@ -139,7 +139,7 @@ def _translate_approval_note_to_english(note: str, router: TaskRouter, remote: R
     request_timeout = max(int(getattr(route, "timeout", 0) or 0), _LLM_TRANSLATION_TIMEOUT)
 
     prompt = (
-        "Translate this Spanish approval note into natural English. "
+        "Translate this Spanish chat reply into natural English. "
         "Return only the English text, without extra comments.\n\n"
         f"Texto:\n{text}"
     )
@@ -158,7 +158,7 @@ def _translate_approval_note_to_english(note: str, router: TaskRouter, remote: R
     try:
         return future.result(timeout=request_timeout)
     except Exception as exc:
-        LOGGER.warning("_translate_approval_note_to_english timeout/error: %r", exc)
+        LOGGER.warning("_translate_spanish_text_to_english timeout/error: %r", exc)
         future.cancel()
         return ""
     finally:
@@ -182,11 +182,11 @@ def _format_pending_for_approval(
         f"{(transcript or 'N/A')[:1200]}\n\n"
         "Traduccion al espanol:\n"
         f"{(transcript_es or 'No disponible.')[:1200]}\n\n"
-        "Borrador en ingles:\n"
+        "Borrador en espanol:\n"
         f"{(draft_reply or 'No se pudo generar borrador automaticamente.')[:1200]}\n\n"
         "Comandos:\n"
         f"/aprobar {approval_id}\n"
-        f"/aprobar {approval_id} <texto_en_ingles_editado>\n"
+        f"/aprobar {approval_id} <texto_en_espanol_editado>\n"
         f"/rechazar {approval_id} <motivo_opcional>\n"
         "/pendientes"
     )
@@ -257,20 +257,29 @@ def _handle_approval_command(
         outbound = tg_client.send_text(chat_id, reply)
         return {"ok": True, "approval": command, "reply": reply, "outbound": outbound}
 
-    final_reply = (item.get("draft_reply_en") or "").strip()
+    final_reply_es = (item.get("draft_reply_en") or "").strip()
     if note:
-        translated_note = _translate_approval_note_to_english(note, router=router, remote=remote)
-        final_reply = translated_note or final_reply
-    elif not final_reply:
+        final_reply_es = note
+    elif not final_reply_es:
         transcript = str(item.get("transcript") or "").strip()
         if transcript and "No se pudo transcribir contenido" not in transcript:
-            final_reply = _build_english_draft(transcript, router=router, remote=remote)
-    if not final_reply:
-        reply = "No hay borrador para aprobar. Usa /aprobar <id> <texto_en_ingles>."
+            final_reply_es = _build_english_draft(transcript, router=router, remote=remote)
+    if not final_reply_es:
+        reply = "No hay borrador para aprobar. Usa /aprobar <id> <texto_en_espanol>."
         outbound = tg_client.send_text(chat_id, reply)
         return {"ok": True, "approval": command, "reply": reply, "outbound": outbound}
 
-    sent = tg_client.send_text(str(item.get("source_chat_id") or ""), final_reply)
+    # Politica operativa: chat privado en espanol, chat origen en ingles.
+    final_reply_en = _translate_spanish_text_to_english(final_reply_es, router=router, remote=remote)
+    if not final_reply_en:
+        reply = (
+            f"No se pudo traducir al ingles la respuesta para la solicitud {approval_id}. "
+            "Vuelve a intentar o usa /aprobar <id> <texto_en_ingles>."
+        )
+        outbound = tg_client.send_text(chat_id, reply)
+        return {"ok": True, "approval": command, "reply": reply, "outbound": outbound}
+
+    sent = tg_client.send_text(str(item.get("source_chat_id") or ""), final_reply_en)
     if not sent.get("ok"):
         reply = f"No se pudo enviar al chat origen (ID {approval_id})."
         outbound = tg_client.send_text(chat_id, reply)
@@ -411,7 +420,7 @@ def process_update(
                     chat_id,
                     message.get("message_id"),
                 )
-            # El borrador en ingles no debe depender de la traduccion al espanol.
+            # El borrador en espanol no debe depender de la traduccion al espanol.
             draft_reply = _build_english_draft(transcript, router=router, remote=remote)
         approval_id = state.create_pending_approval(
             source_chat_id=chat_id,

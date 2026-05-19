@@ -239,12 +239,22 @@ def test_group_message_is_queued_for_approval(monkeypatch):
     assert body["outbound"]["chat_id"] == "12345"
 
 
-def test_approve_command_sends_english_reply_to_group(monkeypatch):
+def test_approve_command_sends_draft_reply_to_group(monkeypatch):
     LAST_MESSAGE_AT.clear()
     monkeypatch.setattr(TelegramConfig, "TELEGRAM_MONITORED_CHAT_ID", "-777")
     monkeypatch.setattr(TelegramConfig, "TELEGRAM_APPROVAL_CHAT_ID", "12345")
+
+    class PolicyRemote(FakeRemote):
+        def generate(self, *args, **kwargs):
+            prompt = kwargs.get("prompt", "")
+            if "Escribe una respuesta breve y natural en espanol" in prompt:
+                return {"response": "Borrador breve en espanol."}
+            if "Translate this Spanish chat reply into natural English" in prompt:
+                return {"response": "Short draft in English."}
+            return {"response": "respuesta de prueba"}
+
     tg_client = FakeClient()
-    app = create_app(router=FakeRouter(), remote=FakeRemote(), tg_client=tg_client, validate_config=False)
+    app = create_app(router=FakeRouter(), remote=PolicyRemote(), tg_client=tg_client, validate_config=False)
     client = app.test_client()
 
     group_payload = {
@@ -275,6 +285,7 @@ def test_approve_command_sends_english_reply_to_group(monkeypatch):
     assert "aprobada" in approve_body["reply"]
     sent_to_group = [call for call in tg_client.calls if call[0] == "-777"]
     assert len(sent_to_group) == 1
+    assert sent_to_group[-1][1] == "Short draft in English."
 
 
 def test_spanish_approval_commands_are_accepted(monkeypatch):
@@ -320,7 +331,7 @@ def test_spanish_approval_note_is_translated_to_english(monkeypatch):
     class NoteAwareRemote(FakeRemote):
         def generate(self, *args, **kwargs):
             prompt = kwargs.get("prompt", "")
-            if "Translate this Spanish approval note into natural English" in prompt:
+            if "Translate this Spanish chat reply into natural English" in prompt:
                 return {"response": "Please keep the delivery estimate updated."}
             return {"response": "respuesta de prueba"}
 
@@ -363,8 +374,8 @@ def test_queue_generates_draft_even_if_translation_is_unavailable(monkeypatch):
             prompt = kwargs.get("prompt", "")
             if "Traduce al espanol de forma fiel y breve" in prompt:
                 return {"response": ""}
-            if "Write a concise, natural English response" in prompt:
-                return {"response": "Here is a concise English draft."}
+            if "Escribe una respuesta breve y natural en espanol" in prompt:
+                return {"response": "Aqui tienes un borrador breve en espanol."}
             return {"response": "respuesta de prueba"}
 
     app = create_app(router=FakeRouter(), remote=TranslationUnavailableRemote(), tg_client=FakeClient(), validate_config=False)
@@ -388,7 +399,7 @@ def test_queue_generates_draft_even_if_translation_is_unavailable(monkeypatch):
     pending = state.get_pending_approval(body["approval_id"])
     assert pending is not None
     assert pending.get("transcript_es") == ""
-    assert pending.get("draft_reply_en") == "Here is a concise English draft."
+    assert pending.get("draft_reply_en") == "Aqui tienes un borrador breve en espanol."
 
 
 def test_queue_uses_local_fallback_draft_when_llm_returns_empty(monkeypatch):
@@ -423,7 +434,7 @@ def test_queue_uses_local_fallback_draft_when_llm_returns_empty(monkeypatch):
     assert pending.get("transcript_es") == ""
     draft = (pending.get("draft_reply_en") or "").strip()
     assert draft != ""
-    assert "Could you confirm" in draft
+    assert "Podrías confirmar" in draft
 
 
 def test_reject_command_closes_pending_without_sending_to_source(monkeypatch):
@@ -524,8 +535,10 @@ def test_approve_regenerates_draft_when_missing(monkeypatch):
     class RecoverDraftRemote(FakeRemote):
         def generate(self, *args, **kwargs):
             prompt = kwargs.get("prompt", "")
-            if "Write a concise, natural English response" in prompt:
-                return {"response": "Recovered English draft."}
+            if "Escribe una respuesta breve y natural en espanol" in prompt:
+                return {"response": "Borrador recuperado en espanol."}
+            if "Translate this Spanish chat reply into natural English" in prompt:
+                return {"response": "Recovered draft in English."}
             return {"response": "respuesta de prueba"}
 
     tg_client = FakeClient()
@@ -563,7 +576,7 @@ def test_approve_regenerates_draft_when_missing(monkeypatch):
     approve_body = approve_resp.get_json()
     assert approve_body["ok"] is True
     sent_to_group = [call for call in tg_client.calls if call[0] == "-777"]
-    assert sent_to_group[-1][1] == "Recovered English draft."
+    assert sent_to_group[-1][1] == "Recovered draft in English."
 
 
 def test_group_message_not_monitored_when_config_missing(monkeypatch):
