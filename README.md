@@ -107,8 +107,8 @@ Variables clave:
 
 Variables de servicios IA:
 
-- DGX_WHISPER_URL (default: http://100.64.129.87:8765/inference)
-- DGX_OLLAMA_URL (default: http://100.64.129.87:11434)
+- DGX_WHISPER_URL (default: http://<dgx-host>:8765/inference)
+- DGX_OLLAMA_URL (default: http://<dgx-host>:11434)
 - LOCAL_OLLAMA_URL (default: http://127.0.0.1:11434)
 - TIMEOUT_* para transcripción, chat, razonamiento, traducción y documentos.
 
@@ -162,8 +162,8 @@ Crear archivo de entorno:
 ```bash
 mkdir -p ~/.config/openclaw
 cat > ~/.config/openclaw/telegram-poller.env << 'EOF'
-OPENCLAW_TELEGRAM_MONITORED_CHAT_ID=-5289754689
-OPENCLAW_TELEGRAM_APPROVAL_CHAT_ID=7434781236
+OPENCLAW_TELEGRAM_MONITORED_CHAT_ID=<chat_id_origen>
+OPENCLAW_TELEGRAM_APPROVAL_CHAT_ID=<chat_id_aprobacion>
 TELEGRAM_RATE_LIMIT_SECONDS=1
 PYTHONUNBUFFERED=1
 EOF

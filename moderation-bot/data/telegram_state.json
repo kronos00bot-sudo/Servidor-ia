@@ -1,5 +1,5 @@
 {
-  "last_update_id": 59729272,
+  "last_update_id": 59729274,
   "chats": {
     "7434781236": {
       "message_count": 33,
@@ -10,15 +10,15 @@
       "last_proactive_at": ""
     },
     "-5289754689": {
-      "message_count": 26,
-      "media_count": 22,
-      "last_message": "No sir, I haven't received that.\n But yeah we are still discussing about the head back up\n there sometime this week.\n On getting rid of the electrical components up there.\n We just let them know what exactly will be tossing.",
-      "last_reply": "pending_approval:35",
-      "last_seen": "2026-05-19T11:12:48.153521+00:00",
+      "message_count": 28,
+      "media_count": 24,
+      "last_message": "Yeah, the linen, we just can wash.\n We could wash the curtains.\n We could wash the curtains.\n But the towels, the towels, they just sitting there.\n I mean, you could always replace towels.\n The linens, then we could wash.\n I said, the stuff we could keep, we could keep.\n But the towels, they...\n The towels ain't get used in eight years.\n Or a little more.\n The stuff was just sitting.\n We said, you know, get rid of.\n Because when anybody move in there, I don't think they're\n going to use them.\n They're going to replace them.\n So that's why I say the curtains and things, we need to\n block out the area.\n Yes.\n But the stuff would not be in use.\n I think you should, yeah, toss them.",
+      "last_reply": "pending_approval:37",
+      "last_seen": "2026-05-19T11:15:39.606321+00:00",
       "last_proactive_at": ""
     }
   },
-  "next_pending_id": 36,
+  "next_pending_id": 38,
   "pending_approvals": {
     "1": {
       "id": "1",
@@ -542,6 +542,36 @@
       "source_message_id": 213,
       "media_kind": "audio",
       "created_at": "2026-05-19T11:12:48.029116+00:00",
+      "resolved_at": "",
+      "resolution_note": ""
+    },
+    "36": {
+      "id": "36",
+      "status": "pending",
+      "source_chat_id": "-5289754689",
+      "source_chat_name": "HB",
+      "sender": "Manoel",
+      "transcript": "We didn't do that for the first break because we thought\n someone was going to be in Harvard\n in the place, but now we know you don't want to have it in\n this place no time soon.\n So you might as well, yeah, take them over to the equation.\n Okay.",
+      "transcript_es": "No lo hicimos para el primer descanso porque pensamos que alguien estaría en Harvard en ese lugar, pero ahora sabemos que no quieres tenerlo aquí pronto. Así que puedes llevarlos a la ecuación, sí. Vale.",
+      "draft_reply_en": "Sounds good—let's take them over to the equation area then.",
+      "source_message_id": 214,
+      "media_kind": "audio",
+      "created_at": "2026-05-19T11:13:42.217601+00:00",
+      "resolved_at": "",
+      "resolution_note": ""
+    },
+    "37": {
+      "id": "37",
+      "status": "pending",
+      "source_chat_id": "-5289754689",
+      "source_chat_name": "HB",
+      "sender": "Manoel",
+      "transcript": "Yeah, the linen, we just can wash.\n We could wash the curtains.\n We could wash the curtains.\n But the towels, the towels, they just sitting there.\n I mean, you could always replace towels.\n The linens, then we could wash.\n I said, the stuff we could keep, we could keep.\n But the towels, they...\n The towels ain't get used in eight years.\n Or a little more.\n The stuff was just sitting.\n We said, you know, get rid of.\n Because when anybody move in there, I don't think they're\n going to use them.\n They're going to replace them.\n So that's why I say the curtains and things, we need to\n block out the area.\n Yes.\n But the stuff would not be in use.\n I think you should, yeah, toss them.",
+      "transcript_es": "Sí, la ropa de cama, solo podemos lavarla. Podemos lavar las cortinas. Podemos lavar las cortinas. Pero las toallas, las toallas, simplemente están allí. Quiero decir, siempre podrías reemplazar las toallas. La ropa de cama, entonces podríamos lavarla. Dije, las cosas que podríamos guardar, las podríamos guardar. Pero las toallas, ellas... Las toallas no se han usado en ocho años. O un poco más. Las cosas simplemente estaban allí. Dijimos, sabes, deshazte de ello. Porque cuando alguien se muda ahí, no creo que vayan a usarlas. Van a reemplazarlas. Entonces, por eso digo que las cortinas y esas cosas, necesitamos bloquear el área. Sí. Pero las cosas no estarían en uso. Creo que deberías, sí, tirarlas.",
+      "draft_reply_en": "Yeah, we can definitely wash the curtains and linens, but the towels haven’t been touched in years. It makes sense to just toss them out and replace them when needed. Let’s go ahead and launder the curtains and linens, then say goodbye to the old towels. 👍",
+      "source_message_id": 215,
+      "media_kind": "audio",
+      "created_at": "2026-05-19T11:15:39.493735+00:00",
       "resolved_at": "",
       "resolution_note": ""
     }
