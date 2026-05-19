@@ -56,3 +56,6 @@ logs/
 # Dependencies
 *.lock
 poetry.lock
+
+# Data directories
+moderation-bot/
