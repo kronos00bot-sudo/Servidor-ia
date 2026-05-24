@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "himalaya": {
+      "version": "1.0.0",
+      "installedAt": 1779549215367
+    },
+    "gog": {
+      "version": "1.0.0",
+      "installedAt": 1779549217271
+    },
+    "agent-memoria": {
+      "version": "1.0.2",
+      "installedAt": 1779549219789
+    }
+  }
+}
