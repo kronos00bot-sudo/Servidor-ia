@@ -1,8 +1,0 @@
-1
-00:00:00,000 --> 00:00:09,620
-I've already read the installation label.
-
-2
-00:00:09,620 --> 00:00:13,020
-Me now.
-
