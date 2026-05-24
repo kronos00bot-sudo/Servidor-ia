@@ -103,7 +103,7 @@ Variables clave:
 - TELEGRAM_RATE_LIMIT_SECONDS
 - TELEGRAM_PROACTIVE_INACTIVITY_HOURS
 - TELEGRAM_PROACTIVE_MAX_CHATS_PER_CYCLE
-- PROJECT_DIR (default: /home/mloco/Escritorio/Servidor-ia/moderation-bot)
+- PROJECT_DIR (default: /home/mloco/Escritorio/workspace/moderation-bot)
 
 Variables de servicios IA:
 
@@ -117,7 +117,7 @@ Variables de servicios IA:
 Desde agente_workspace:
 
 ```bash
-cd /home/mloco/Escritorio/Servidor-ia/agente_workspace
+cd /home/mloco/Escritorio/workspace/agente_workspace
 python3 -m venv skills/telegram/.venv
 source skills/telegram/.venv/bin/activate
 pip install --upgrade pip
@@ -183,11 +183,11 @@ StartLimitIntervalSec=60
 
 [Service]
 Type=simple
-WorkingDirectory=/home/mloco/Escritorio/Servidor-ia/agente_workspace
+WorkingDirectory=/home/mloco/Escritorio/workspace/agente_workspace
 Environment=HOME=/home/mloco
 Environment=PATH=/usr/bin:/home/mloco/.local/bin
 EnvironmentFile=/home/mloco/.config/openclaw/telegram-poller.env
-ExecStart=/home/mloco/Escritorio/Servidor-ia/agente_workspace/skills/telegram/.venv/bin/python -m skills.telegram.telegram_skill --poll --sleep 2
+ExecStart=/home/mloco/Escritorio/workspace/agente_workspace/skills/telegram/.venv/bin/python -m skills.telegram.telegram_skill --poll --sleep 2
 Restart=always
 RestartSec=3
 TimeoutStopSec=20

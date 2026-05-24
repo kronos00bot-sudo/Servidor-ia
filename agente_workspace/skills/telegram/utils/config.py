@@ -77,7 +77,7 @@ def _owner_allow_from(config: dict) -> str:
 class TelegramConfig:
     """Runtime settings for the Telegram channel adapter."""
 
-    PROJECT_DIR = Path(os.getenv("PROJECT_DIR", "/home/mloco/Escritorio/Servidor-ia/moderation-bot")).expanduser()
+    PROJECT_DIR = Path(os.getenv("PROJECT_DIR", "/home/mloco/Escritorio/workspace/moderation-bot")).expanduser()
     DGX_WHISPER_URL = os.getenv("DGX_WHISPER_URL", "http://100.64.129.87:8765/inference")
     DGX_OLLAMA_URL = os.getenv("DGX_OLLAMA_URL", "http://100.64.129.87:11434")
     LOCAL_OLLAMA_URL = os.getenv("LOCAL_OLLAMA_URL", "http://127.0.0.1:11434")

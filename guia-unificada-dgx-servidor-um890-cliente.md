@@ -1199,14 +1199,13 @@ mkdir -p ~/Escritorio/Servidor-ia/agente_workspace
       "token": "${OPENCLAW_GATEWAY_TOKEN}"
     },
     "port": 18789,
-    "bind": "lan",
+    "bind": "loopback",
     "tailscale": { "mode": "off", "resetOnExit": false },
     "controlUi": {
-      "allowInsecureAuth": true,
-      "dangerouslyAllowHostHeaderOriginFallback": true,
-      "dangerouslyDisableDeviceAuth": true,
+      "allowInsecureAuth": false,
+      "dangerouslyAllowHostHeaderOriginFallback": false,
+      "dangerouslyDisableDeviceAuth": false,
       "allowedOrigins": [
-        "http://${OPENCLAW_IP_LOCAL}:18789",
         "http://127.0.0.1:18789",
         "http://localhost:18789"
       ]
@@ -1295,7 +1294,7 @@ openclaw onboard --install-daemon
 # Proveedor: Ollama | modelo: qwen35-es | canal: Telegram
 
 # Iniciar el servicio 24/7
-systemctl --user restart openclaw-gateway
+openclaw gateway restart
 sleep 5
 journalctl --user -u openclaw-gateway --since "30 sec ago" | grep -i 'error\|ready\|telegram'
 # → Telegram connected ✅
@@ -1490,7 +1489,7 @@ openclaw gateway restart
 
 **En el UM890:**
 ```bash
-systemctl --user restart openclaw-gateway
+openclaw gateway restart
 ```
 
 Verificar que está activo:
@@ -1876,7 +1875,7 @@ chmod +x ~/Escritorio/Servidor-ia/voz/ptt.sh
 ```bash
 openclaw skills install openai-whisper
 openclaw skills install sherpa-onnx-tts
-systemctl --user restart openclaw-gateway
+openclaw gateway restart
 openclaw skills list | grep -E "whisper|sherpa"
 # → ✓ ready  openai-whisper
 # → ✓ ready  sherpa-onnx-tts
@@ -1944,6 +1943,7 @@ python3 ~/Escritorio/Servidor-ia/voz/asistente_voz.py wake
 | Modelo tarda 5–15 min | Thinking mode activo | Usar Modelfiles `-es` (sección 19.4) |
 | VRAM al 99%, 1–2 tok/s | `OLLAMA_KV_CACHE_TYPE=q8_0` satura VRAM | Eliminar esa variable del override.conf |
 | Panel web "Unauthorized" | `bind: loopback` o falta token | `bind: lan` + `?token=<WEB_PANEL_TOKEN>` |
+| `gateway connect failed: scope upgrade pending approval` (requestId cambia en cada intento) | El dispositivo `cli` pide scopes mayores a los aprobados y queda en bucle de pairing/repair | Verificar `openclaw devices list --json`; si no hay otro dispositivo admin para aprobar, alinear scopes del device en `~/.openclaw/devices/paired.json`, vaciar `~/.openclaw/devices/pending.json`, luego `openclaw gateway restart`; validar `"pending": []` |
 | OpenClaw: `low context window` | `contextWindow` demasiado bajo | Subir a 16384 en openclaw.json y Modelfile |
 | Sesión bloqueada 300+ segundos | Historial supera el contexto | Ejecutar `/clear` en Telegram + num_ctx ≥ 16384 |
 | `rocm-smi` no encontrado | Grupos render/video no aplicados | Hacer logout/login o `newgrp render` |
@@ -2000,7 +2000,7 @@ gog calendar events --today
 # Servicios
 sudo systemctl restart ollama
 sudo systemctl restart ai-performance
-systemctl --user restart openclaw-gateway
+openclaw gateway restart
 
 # GPU
 rocm-smi

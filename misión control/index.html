@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenClaw Mission Control</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px 20px;
+            cursor: pointer;
+            text-align: center;
+            font-weight: 600;
+            color: #6c757d;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .tab.active {
+            color: #4facfe;
+            border-bottom-color: #4facfe;
+            background: white;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border-left: 4px solid #4facfe;
+            transition: transform 0.2s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            font-size: 1rem;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .agents-list, .tasks-list, .history-list {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        .agents-list h2, .tasks-list h2, .history-list h2 {
+            color: #2c3e50;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        
+        .agent-item, .task-item, .history-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-left: 3px solid #e9ecef;
+            transition: all 0.2s ease;
+        }
+        
+        .agent-item:hover, .task-item:hover, .history-item:hover {
+            background: #e9ecef;
+            border-left-color: #4facfe;
+        }
+        
+        .agent-header, .task-header, .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        
+        .agent-name, .task-name, .history-timestamp {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 1.1rem;
+        }
+        
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-running { background: #d4edda; color: #155724; }
+        .status-done { background: #d1ecf1; color: #0c5460; }
+        .status-error { background: #f8d7da; color: #721c24; }
+        
+        .agent-details, .task-details, .history-details {
+            color: #555;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+        
+        .detail-row {
+            display: flex;
+            margin: 8px 0;
+        }
+        
+        .detail-label {
+            font-weight: 600;
+            min-width: 120px;
+            color: #495057;
+        }
+        
+        .detail-value {
+            flex: 1;
+            color: #212529;
+        }
+        
+        .refresh-btn {
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+        }
+        
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 172, 254, 0.6);
+        }
+        
+        .refresh-btn:active {
+            transform: translateY(0);
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+            font-size: 0.9rem;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .agent-header, .task-header, .history-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .status-badge {
+                margin-top: 10px;
+                align-self: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 OpenClaw Mission Control</h1>
+            <p>Dashboard de monitoreo en tiempo real para agentes de IA</p>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="overview">Resumen</div>
+            <div class="tab" data-tab="agents">Agentes</div>
+            <div class="tab" data-tab="tasks">Tareas</div>
+            <div class="tab" data-tab="history">Historial</div>
+        </div>
+        
+        <div class="tab-content active" id="overview-tab">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="total-sessions">-</div>
+                    <div class="stat-label">Sesiones Totales</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="active-sessions">-</div>
+                    <div class="stat-label">Sesiones Activas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="running-tasks">-</div>
+                    <div class="stat-label">Tareas en Ejecución</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="completed-today">-</div>
+                    <div class="stat-label">Tareas Completadas Hoy</div>
+                </div>
+            </div>
+            
+            <div class="tasks-list">
+                <h2>📋 Tareas Recientes</h2>
+                <div id="tasks-container">
+                    <div class="task-item">
+                        <div class="task-header">
+                            <span class="task-name">Cargando datos...</span>
+                            <span class="status-badge status-running">Cargando...</span>
+                        </div>
+                        <div class="task-details">
+                            Inicializando sistema de monitoreo...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="agents-tab">
+            <div class="agents-list">
+                <h2>👥 Agentes Activos</h2>
+                <div id="agents-container">
+                    <div class="agent-item">
+                        <div class="agent-header">
+                            <span class="agent-name">Cargando...</span>
+                            <span class="status-badge status-running">Inicializando...</span>
+                        </div>
+                        <div class="agent-details">
+                            Esperando datos de sesiones...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="tasks-tab">
+            <div class="tasks-list">
+                <h2>⚙️ Tareas Detalladas</h2>
+                <div id="detailed-tasks-container">
+                    <div class="task-item">
+                        <div class="task-header">
+                            <span class="task-name">Cargando...</span>
+                            <span class="status-badge status-running">Obteniendo datos...</span>
+                        </div>
+                        <div class="task-details">
+                            Preparando lista de tareas...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="history-tab">
+            <div class="history-list">
+                <h2>📜 Historial de Tareas</h2>
+                <div id="history-container">
+                    <div class="history-item">
+                        <div class="history-header">
+                            <span class="history-timestamp">Cargando...</span>
+                        </div>
+                        <div class="history-details">
+                            Inicializando historial...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            OpenClaw Mission Control v1.0 • Actualizado: <span id="last-update">Cargando...</span>
+        </div>
+    </div>
+
+    <script>
+        // Estado global
+        let sessionsData = [];
+        let lastUpdate = null;
+        
+        // Elementos del DOM
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const refreshBtn = document.createElement('button');
+        refreshBtn.textContent = '🔄 Actualizar';
+        refreshBtn.className = 'refresh-btn';
+        refreshBtn.onclick = loadData;
+        
+        // Añadir botón de refresh al header
+        document.querySelector('.header').appendChild(refreshBtn);
+        
+        // Manejo de tabs
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab + '-tab').classList.add('active');
+            });
+        });
+        
+        // Función para formatear timestamps
+        function formatTimestamp(timestamp) {
+            if (!timestamp) return 'N/A';
+            const date = new Date(timestamp);
+            return date.toLocaleString('es-ES', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+        
+        // Función para calcular duración
+        function calculateDuration(startMs, endMs) {
+            if (!startMs) return 'N/A';
+            const end = endMs || Date.now();
+            const diffMs = end - startMs;
+            const seconds = Math.floor(diffMs / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const hours = Math.floor(minutes / 60);
+            
+            if (hours > 0) return `${hours}h ${minutes % 60}m`;
+            if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
+            return `${seconds}s`;
+        }
+        
+        // Función para cargar datos (simulada por ahora)
+        async function loadData() {
+            refreshBtn.textContent = '🔄 Actualizando...';
+            refreshBtn.disabled = true;
+            
+            try {
+                // En una implementación real, haríamos llamadas a las APIs de OpenClaw
+                // Por ahora, simulamos con datos de ejemplo basados en lo que sabemos
+                
+                // Simular retraso de red
+                await new Promise(resolve => setTimeout(resolve, 800));
+                
+                // Datos de ejemplo basados en nuestra sesión actual
+                const now = Date.now();
+                
+                sessionsData = [
+                    {
+                        key: 'agent:main:tui-3f390c56-2241-49ec-b2ec-4e8823758ea6',
+                        agentId: 'main',
+                        kind: 'other',
+                        channel: 'webchat',
+                        status: 'running',
+                        startedAt: now - 2 * 60 * 60 * 1000, // 2 hours ago
+                        model: 'dgx/nemotron-3-super:120b',
+                        contextTokens: 90000,
+                        totalTokens: 608,
+                        estimatedCostUsd: 0.0000,
+                        childSessions: [
+                            'agent:main:subagent:fdf14d88-7b72-4e22-976a-04c65f36e013'
+                        ]
+                    },
+                    {
+                        key: 'agent:main:subagent:fdf14d88-7b72-4e22-976a-04c65f36e013',
+                        agentId: 'main',
+                        kind: 'other',
+                        channel: 'webchat',
+                        status: 'done',
+                        startedAt: now - 15 * 60 * 1000, // 15 minutes ago
+                        endedAt: now - 2 * 60 * 1000, // 2 minutes ago
+                        model: 'dgx/nemotron-3-super:120b',
+                        label: 'Subagente fiscal para análisis de IR-IA (modelo local Spark)',
+                        runtimeMs: 15 * 60 * 1000
+                    },
+                    {
+                        key: 'agent:main:subagent:c95de80d-e770-4b60-b81a-d3238bff8458',
+                        agentId: 'main',
+                        kind: 'other',
+                        channel: 'webchat',
+                        status: 'done',
+                        startedAt: now - 35 * 60 * 1000, // 35 minutes ago
+                        endedAt: now - 25 * 60 * 1000, // 25 minutes ago
+                        model: 'nemotron-3-super:120b',
+                        label: 'Subagente fiscal para análisis de IR-IA',
+                        runtimeMs: 10 * 60 * 1000
+                    },
+                    {
+                        key: 'agent:main:subagent:5565939c-07eb-4843-9fda-ec6d4583516b',
+                        agentId: 'main',
+                        kind: 'other',
+                        channel: 'webchat',
+                        status: 'done',
+                        startedAt: now - 50 * 60 * 1000, // 50 minutes ago
+                        endedAt: now - 40 * 60 * 1000, // 40 minutes ago
+                        model: 'nvidia/nemotron-3-super-120b-a12b',
+                        label: 'Madre',
+                        runtimeMs: 10 * 60 * 1000
+                    }
+                ];
+                
+                lastUpdate = now;
+                updateDashboard();
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showError('Error al cargar datos: ' + error.message);
+            } finally {
+                refreshBtn.textContent = '🔄 Actualizar';
+                refreshBtn.disabled = false;
+            }
+        }
+        
+        // Función para actualizar el dashboard con los datos
+        function updateDashboard() {
+            // Actualizar timestamp
+            document.getElementById('last-update').textContent = 
+                new Date(lastUpdate).toLocaleTimeString('es-ES');
+            
+            // Calcular estadísticas
+            const totalSessions = sessionsData.length;
+            const activeSessions = sessionsData.filter(s => s.status === 'running').length;
+            const runningTasks = sessionsData.filter(s => s.status === 'running' && s.key.includes('subagent')).length;
+            const completedToday = sessionsData.filter(s => 
+                s.status === 'done' && 
+                s.startedAt > (Date.now() - 24 * 60 * 60 * 1000)
+            ).length;
+            
+            // Actualizar estadísticas
+            document.getElementById('total-sessions').textContent = totalSessions;
+            document.getElementById('active-sessions').textContent = activeSessions;
+            document.getElementById('running-tasks').textContent = runningTasks;
+            document.getElementById('completed-today').textContent = completedToday;
+            
+            // Actualizar lista de agentes
+            const agentsContainer = document.getElementById('agents-container');
+            agentsContainer.innerHTML = '';
+            
+            sessionsData.forEach(session => {
+                const agentDiv = document.createElement('div');
+                agentDiv.className = 'agent-item';
+                
+                const statusClass = session.status === 'running' ? 'status-running' : 
+                                  session.status === 'done' ? 'status-done' : 'status-error';
+                
+                agentDiv.innerHTML = `
+                    <div class="agent-header">
+                        <span class="agent-name">${session.label || session.key.split(':').pop()}</span>
+                        <span class="status-badge ${statusClass}">${session.status}</span>
+                    </div>
+                    <div class="agent-details">
+                        <div class="detail-row">
+                            <span class="detail-label">ID:</span>
+                            <span class="detail-value">${session.key}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Modelo:</span>
+                            <span class="detail-value">${session.model}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Canal:</span>
+                            <span class="detail-value">${session.channel}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Iniciado:</span>
+                            <span class="detail-value">${formatTimestamp(session.startedAt)}</span>
+                        </div>
+                        ${session.endedAt ? `
+                        <div class="detail-row">
+                            <span class="detail-label">Finalizado:</span>
+                            <span class="detail-value">${formatTimestamp(session.endedAt)}</span>
+                        </div>
+                        ` : ''}
+                        ${session.runtimeMs ? `
+                        <div class="detail-row">
+                            <span class="detail-label">Duración:</span>
+                            <span class="detail-value">${calculateDuration(session.startedAt, session.endedAt)}</span>
+                        </div>
+                        ` : ''}
+                        ${session.contextTokens !== undefined ? `
+                        <div class="detail-row">
+                            <span class="detail-label">Tokens de contexto:</span>
+                            <span class="detail-value">${session.contextTokens.toLocaleString()}</span>
+                        </div>
+                        ` : ''}
+                        ${session.childSessions && session.childSessions.length > 0 ? `
+                        <div class="detail-row">
+                            <span class="detail-label">Subagentes:</span>
+                            <span class="detail-value">${session.childSessions.length} activos</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+                
+                agentsContainer.appendChild(agentDiv);
+            });
+            
+            // Actualizar lista de tareas (simplificada)
+            const tasksContainer = document.getElementById('tasks-container');
+            tasksContainer.innerHTML = '';
+            
+            sessionsData.forEach(session => {
+                if (session.key.includes('subagent')) {
+                    const taskDiv = document.createElement('div');
+                    taskDiv.className = 'task-item';
+                    
+                    const statusClass = session.status === 'running' ? 'status-running' : 
+                                    session.status === 'done' ? 'status-done' : 'status-error';
+                    
+                    taskDiv.innerHTML = `
+                        <div class="task-header">
+                            <span class="task-name">${session.label || 'Tarea sin nombre'}</span>
+                            <span class="status-badge ${statusClass}">${session.status}</span>
+                        </div>
+                        <div class="task-details">
+                            <div class="detail-row">
+                                <span class="detail-label">Tipo:</span>
+                                <span class="detail-value">Subagente</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Modelo:</span>
+                                <span class="detail-value">${session.model}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Duración:</span>
+                                <span class="detail-value">${calculateDuration(session.startedAt, session.endedAt)}</span>
+                            </div>
+                            ${session.label ? `
+                            <div class="detail-row">
+                                <span class="detail-label">Descripción:</span>
+                                <span class="detail-value">${session.label}</span>
+                            </div>
+                            ` : ''}
+                        </div>
+                    `;
+                    
+                    tasksContainer.appendChild(taskDiv);
+                }
+            });
+            
+            // Actualizar historial (simplificado)
+            const historyContainer = document.getElementById('history-container');
+            historyContainer.innerHTML = '';
+            
+            // Ordenar por fecha de finalización (más recientes primero)
+            const sortedSessions = [...sessionsData]
+                .filter(s => s.status === 'done' && s.endedAt)
+                .sort((a, b) => b.endedAt - a.endedAt);
+            
+            sortedSessions.forEach(session => {
+                const historyDiv = document.createElement('div');
+                historyDiv.className = 'history-item';
+                
+                historyDiv.innerHTML = `
+                    <div class="history-header">
+                        <span class="history-timestamp">${formatTimestamp(session.endedAt)}</span>
+                    </div>
+                    <div class="history-details">
+                        <div class="detail-row">
+                            <span class="detail-label">Agente:</span>
+                            <span class="detail-value">${session.label || session.key.split(':').pop()}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Estado:</span>
+                            <span class="detail-value">${session.status}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Duración:</span>
+                            <span class="detail-value">${calculateDuration(session.startedAt, session.endedAt)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Modelo:</span>
+                            <span class="detail-value">${session.model}</span>
+                        </div>
+                    </div>
+                `;
+                
+                historyContainer.appendChild(historyDiv);
+            });
+        }
+        
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            
+            // Auto-refresh cada 30 segundos
+            setInterval(loadData, 30000);
+        });
+    </script>
+</body>
+</html>

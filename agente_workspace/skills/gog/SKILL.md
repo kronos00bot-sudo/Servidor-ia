@@ -29,8 +29,8 @@ Common commands
 - Docs cat: `gog docs cat <docId>`
 
 Notes
-- Set `GOG_ACCOUNT=kronos00bot@gmail.com` to avoid repeating `--account`.
+- Set `GOG_ACCOUNT=you@gmail.com` to avoid repeating `--account`.
 - For scripting, prefer `--json` plus `--no-input`.
 - Sheets values can be passed via `--values-json` (recommended) or as inline rows.
 - Docs supports export/cat/copy. In-place edits require a Docs API client (not in gog).
-- In interactive sessions, confirm before sending mail. In automated jobs or TaskFlow, proceed directly if the task already specifies recipient and content.
+- Confirm before sending mail or creating events.
