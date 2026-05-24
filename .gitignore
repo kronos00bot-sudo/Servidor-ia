@@ -59,3 +59,8 @@ poetry.lock
 
 # Data directories
 moderation-bot/
+
+# Archivos de Documentos - no incluir en repositorio
+resultado*.csv
+resultado*.xlsx
+scripts/extract_*.py
